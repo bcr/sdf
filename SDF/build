@@ -1,0 +1,2 @@
+#!/bin/sh
+mcs -reference:NUnit.Framework -target:library *.cs
