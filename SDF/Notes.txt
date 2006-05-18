@@ -1,6 +1,31 @@
+05/18/2006 (Revision 5)
+
+It turns out that handling multiple expressions was trivial. Instead of using Regex.Match, use Regex.Matches. Sweeet.
+
+foreach (Match match in regex.Matches(eval))
+
+Nice. The syntax seems to hold up. Multiple expressions look like
+
+Print message='foo'
+Print message='bar'
+
+which parses unambiguously, even with zero arguments.
+
+TODO
+
+* LoadExpressions expression to load all of the expressions in an assembly
+
+* Make makefile suck less
+
+    * build to build directory
+    
+    * clean target
+    
+    * Smarter building of DLLs (.cs.dll rule or something)
+
 05/17/2006 (Revision 4)
 
-Added a Makefile. Crappy, but exists. Two main targets -- "build" and "test"
+Added a Makefile. Crappy, but exists. Two main targets -- "build" and "test".
 
 TODO
 

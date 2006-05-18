@@ -66,6 +66,38 @@ namespace SDF
 
 			Assert.AreEqual("HELLO, WORLD\n", this.output.ToString());
 		}
+
+		[Test]
+		public void TestTwoExpressions()
+		{
+			this.sdf.Eval(
+				"Print message='Hello, world'\n" +
+				"PrintUpper message='Hello, world'\n"
+				);
+
+			Assert.AreEqual("Hello, world\nHELLO, WORLD\n", this.output.ToString());
+		}
+
+		public class Foo
+		{
+			public void Evaluate(Hashtable arguments)
+			{
+				System.Console.WriteLine("I am Foo");
+			}
+		}
+
+		[Test]
+		public void TestTwoExpressionsNoParameters()
+		{
+			this.sdf.AddType(typeof(Foo));
+
+			this.sdf.Eval(
+				"Foo\n" +
+				"Foo\n"
+				);
+
+			Assert.AreEqual("I am Foo\nI am Foo\n", this.output.ToString());
+		}
 	}
 
 	public class SDF
@@ -90,27 +122,29 @@ namespace SDF
 		{
 			string expression = null;
 			Hashtable arguments = null;
+
+			Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
 			
+			foreach (Match match in regex.Matches(eval))
 			{
-				Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
-				Match match = regex.Match(eval);
-
-				Group names = match.Groups["name"];
-				Group values = match.Groups["value"];
-
-				expression = match.Groups["expression"].ToString();
-				arguments = new Hashtable(names.Captures.Count);
-
-				for (int counter = 0;counter < names.Captures.Count;++counter)
 				{
-					arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
-				}
-			}
+					Group names = match.Groups["name"];
+					Group values = match.Groups["value"];
 
-			{
-				Type type = (Type) expressions[expression];
-				object o = type.GetConstructor(new Type[0]).Invoke(null);
-				type.GetMethod("Evaluate").Invoke(o, new Object[] { arguments });
+					expression = match.Groups["expression"].ToString();
+					arguments = new Hashtable(names.Captures.Count);
+
+					for (int counter = 0;counter < names.Captures.Count;++counter)
+					{
+						arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
+					}
+				}
+
+				{
+					Type type = (Type) expressions[expression];
+					object o = type.GetConstructor(new Type[0]).Invoke(null);
+					type.GetMethod("Evaluate").Invoke(o, new Object[] { arguments });
+				}
 			}
 		}
 	}
