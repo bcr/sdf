@@ -1,2 +1,2 @@
 #!/bin/sh
-mono ../../OpenSource/NUnit-2.2.0-mono/bin/nunit-console.exe SDF.dll
+mono ../../../OpenSource/NUnit-2.2.0-mono/bin/nunit-console.exe SDF.dll

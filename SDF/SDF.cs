@@ -9,6 +9,22 @@ namespace SDF
 	[TestFixture]
 	public class TestEval
 	{
+		private class Print
+		{
+		    public void Evaluate(Hashtable arguments)
+		    {
+		        Console.WriteLine(arguments["message"]);
+		    }
+		}
+
+		private class PrintUpper
+		{
+		    public void Evaluate(Hashtable arguments)
+		    {
+				Console.WriteLine(((string) arguments["message"]).ToUpper());
+		    }
+		}
+
 		private class StandardOutputRedirector
 		{
 			private StringWriter outputWriter;
@@ -33,11 +49,20 @@ namespace SDF
 		}
 
 		private StandardOutputRedirector output;
+		private SDF sdf;
 		
 		[SetUp]
 		public void SetUp()
 		{
 			this.output = new StandardOutputRedirector();
+			this.sdf = new SDF();
+			{
+				Type[] types = { typeof(Print), typeof(PrintUpper) };
+				foreach (Type type in types)
+				{
+					this.sdf.AddType(type);
+				}
+			}
 		}
 
 		[TearDown]
@@ -49,7 +74,7 @@ namespace SDF
 		[Test]
 		public void TestPrint()
 		{
-			SDF.Eval("Print message='Hello, world'");
+			this.sdf.Eval("Print message='Hello, world'");
 
 			Assert.AreEqual("Hello, world\n", this.output.ToString());
 		}
@@ -57,7 +82,7 @@ namespace SDF
 		[Test]
 		public void TestPrintUpper()
 		{
-			SDF.Eval("PrintUpper message='Hello, world'");
+			this.sdf.Eval("PrintUpper message='Hello, world'");
 
 			Assert.AreEqual("HELLO, WORLD\n", this.output.ToString());
 		}
@@ -65,31 +90,38 @@ namespace SDF
 
 	public class SDF
 	{
-		public static void Eval(string eval)
+		private Hashtable expressions = new Hashtable();
+
+		public void AddType(Type type)
 		{
-			Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
-			Match match = regex.Match(eval);
+			expressions[type.Name] = type;
+		}
 
-			string expression = match.Groups["expression"].ToString();
-			Group names = match.Groups["name"];
-			Group values = match.Groups["value"];
-
-			Hashtable arguments = new Hashtable(names.Captures.Count);
-
-			for (int counter = 0;counter < names.Captures.Count;++counter)
+		public void Eval(string eval)
+		{
+			string expression = null;
+			Hashtable arguments = null;
+			
 			{
-				arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
+				Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
+				Match match = regex.Match(eval);
+
+				Group names = match.Groups["name"];
+				Group values = match.Groups["value"];
+
+				expression = match.Groups["expression"].ToString();
+				arguments = new Hashtable(names.Captures.Count);
+
+				for (int counter = 0;counter < names.Captures.Count;++counter)
+				{
+					arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
+				}
 			}
 
-			switch (expression)
 			{
-				case "Print":
-					Console.WriteLine(arguments["message"]);
-					break;
-					
-				case "PrintUpper":
-					Console.WriteLine(((string) arguments["message"]).ToUpper());
-					break;
+				Type type = (Type) expressions[expression];
+				object o = type.GetConstructor(new Type[0]).Invoke(null);
+				type.GetMethod("Evaluate").Invoke(o, new Object[] { arguments });
 			}
 		}
 	}

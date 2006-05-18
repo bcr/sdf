@@ -1,4 +1,31 @@
-05/17/2006
+05/17/2006 (Revision 2)
+
+I moved the Print and PrintUpper implementations to their own class in preparation for the move to auto-discovery. Now I have the following:
+
+class Print
+{
+    public void Evaluate(Hashtable arguments)
+    {
+        Console.WriteLine(arguments["message"]);
+    }
+}
+
+The SDF class now maintains a registry of Type objects that are classes that implement expressions. The class name indicates the expression name. So you just call SDF.AddType for each class that implements an expression. When Eval is called, it looks up the type in the registry, instantiates a new instance with the default constructor, and then calls a method named Evaluate in order to execute it
+
+Type type = (Type) expressions[expression];
+object o = type.GetConstructor(new Type[0]).Invoke(null);
+type.GetMethod("Evaluate").Invoke(o, new Object[] { arguments });
+
+I chose not to use an interface for the Evaluate method. I just discover it by hand at execution time.
+
+TODO
+
+* Move Print and PrintUpper to their own assembly and discover them dynamically
+
+* Handle more complex Eval with multiple expressions
+
+
+05/17/2006 (Revision 1)
 
 This was the first cut I made of SDF. Basically getting up to speed with the NUnit environment and the various regex features of C#. There are two main things I futzed around with for this version:
 
