@@ -1,30 +1,16 @@
 namespace SDF
 {
 	using NUnit.Framework;
+
 	using System;
 	using System.Collections;
 	using System.IO;
 	using System.Text.RegularExpressions;
+	using System.Reflection;
 		
 	[TestFixture]
 	public class TestEval
 	{
-		private class Print
-		{
-		    public void Evaluate(Hashtable arguments)
-		    {
-		        Console.WriteLine(arguments["message"]);
-		    }
-		}
-
-		private class PrintUpper
-		{
-		    public void Evaluate(Hashtable arguments)
-		    {
-				Console.WriteLine(((string) arguments["message"]).ToUpper());
-		    }
-		}
-
 		private class StandardOutputRedirector
 		{
 			private StringWriter outputWriter;
@@ -56,13 +42,7 @@ namespace SDF
 		{
 			this.output = new StandardOutputRedirector();
 			this.sdf = new SDF();
-			{
-				Type[] types = { typeof(Print), typeof(PrintUpper) };
-				foreach (Type type in types)
-				{
-					this.sdf.AddType(type);
-				}
-			}
+			this.sdf.AddAssembly("SDF.Print.dll");
 		}
 
 		[TearDown]
@@ -91,6 +71,15 @@ namespace SDF
 	public class SDF
 	{
 		private Hashtable expressions = new Hashtable();
+
+		public void AddAssembly(string assemblyFilename)
+		{
+			Assembly assembly = Assembly.LoadFrom(assemblyFilename);
+			foreach (Type type in assembly.GetExportedTypes())
+			{
+				AddType(type);
+			}
+		}
 
 		public void AddType(Type type)
 		{

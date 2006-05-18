@@ -1,3 +1,33 @@
+05/17/2006 (Revision 3)
+
+I moved Print and PrintUpper to a separate assembly (SDF.Print), and added SDF.LoadAssembly to read it. It's a little cheesed right now, since the filename is hardcoded in the unit test. I think that there's at least two major refactorings that need to happen:
+
+* There needs to be some semblance of a build environment here. I've got two assemblies now, one dependent on the other. A quick poll on #mono yielded "use make" from Miguel, so that's about as good an answer I need ;).
+
+* There needs to be some way to load assemblies from SDF itself.
+
+The assembly loading was pretty trivial -- basically, given a filename, I can reuse the existing SDF.AddType to add all of his public classes. Works like a champ
+
+public void AddAssembly(string assemblyFilename)
+{
+	Assembly assembly = Assembly.LoadFrom(assemblyFilename);
+	foreach (Type type in assembly.GetExportedTypes())
+	{
+		AddType(type);
+	}
+}
+
+it currently does not qualify the types -- the presumption is that every exported type is a type that would be fun to have accessible from SDF.
+
+TODO
+
+* Makefile
+
+* Handle more complex Eval with multiple expressions
+
+* LoadExpressions expression to load all of the expressions in an assembly -- I think this may end up being the single "builtin" expression.
+
+
 05/17/2006 (Revision 2)
 
 I moved the Print and PrintUpper implementations to their own class in preparation for the move to auto-discovery. Now I have the following:
