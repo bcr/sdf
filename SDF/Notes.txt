@@ -1,3 +1,22 @@
+05/17/2006 (Revision 4)
+
+Added a Makefile. Crappy, but exists. Two main targets -- "build" and "test"
+
+TODO
+
+* Handle more complex Eval with multiple expressions
+
+* LoadExpressions expression to load all of the expressions in an assembly -- I think this may end up being the single "builtin" expression.
+
+* Make makefile suck less
+
+    * build to build directory
+    
+    * clean target
+    
+    * Smarter building of DLLs (.cs.dll rule or something)
+
+
 05/17/2006 (Revision 3)
 
 I moved Print and PrintUpper to a separate assembly (SDF.Print), and added SDF.LoadAssembly to read it. It's a little cheesed right now, since the filename is hardcoded in the unit test. I think that there's at least two major refactorings that need to happen:

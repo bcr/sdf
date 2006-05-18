@@ -1,3 +1,0 @@
-#!/bin/sh
-mcs -reference:NUnit.Framework -target:library SDF.Print.cs
-mcs -reference:NUnit.Framework -target:library SDF.cs
