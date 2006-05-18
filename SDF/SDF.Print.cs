@@ -6,7 +6,7 @@ namespace SDF.Print
 
 	public class Print
 	{
-	    public void Evaluate(Hashtable arguments)
+	    public void Evaluate(SDF sdf, Hashtable arguments)
 	    {
 	        Console.WriteLine(arguments["message"]);
 	    }
@@ -14,7 +14,7 @@ namespace SDF.Print
 
 	public class PrintUpper
 	{
-	    public void Evaluate(Hashtable arguments)
+	    public void Evaluate(SDF sdf, Hashtable arguments)
 	    {
 			Console.WriteLine(((string) arguments["message"]).ToUpper());
 	    }

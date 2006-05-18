@@ -1,3 +1,30 @@
+05/18/2006 (Revision 6)
+
+I added an SDF parameter to Evaluate, and a default expression called LoadExpressions. So now you can do:
+
+LoadExpressions filename='SDF.Print.dll'
+
+and the magic happens.
+
+I'm thinking that parameter validation is coming next. LoadExpressions requires a filename that must exist, Print requires a message to print.
+
+TODO
+
+* Parameter validation
+
+    * Required parameters
+    
+    * Too many parameters
+
+* Make makefile suck less
+
+    * build to build directory
+    
+    * clean target
+    
+    * Smarter building of DLLs (.cs.dll rule or something)
+
+
 05/18/2006 (Revision 5)
 
 It turns out that handling multiple expressions was trivial. Instead of using Regex.Match, use Regex.Matches. Sweeet.

@@ -42,7 +42,7 @@ namespace SDF
 		{
 			this.output = new StandardOutputRedirector();
 			this.sdf = new SDF();
-			this.sdf.AddAssembly("SDF.Print.dll");
+			this.sdf.Eval("LoadExpressions filename='SDF.Print.dll'");
 		}
 
 		[TearDown]
@@ -80,7 +80,7 @@ namespace SDF
 
 		public class Foo
 		{
-			public void Evaluate(Hashtable arguments)
+			public void Evaluate(SDF sdf, Hashtable arguments)
 			{
 				System.Console.WriteLine("I am Foo");
 			}
@@ -103,6 +103,19 @@ namespace SDF
 	public class SDF
 	{
 		private Hashtable expressions = new Hashtable();
+
+		public class LoadExpressions
+		{
+			public void Evaluate(SDF sdf, Hashtable arguments)
+			{
+				sdf.AddAssembly((string) arguments["filename"]);
+			}
+		}
+
+		public SDF()
+		{
+			AddType(typeof(LoadExpressions));
+		}
 
 		public void AddAssembly(string assemblyFilename)
 		{
@@ -143,7 +156,7 @@ namespace SDF
 				{
 					Type type = (Type) expressions[expression];
 					object o = type.GetConstructor(new Type[0]).Invoke(null);
-					type.GetMethod("Evaluate").Invoke(o, new Object[] { arguments });
+					type.GetMethod("Evaluate").Invoke(o, new Object[] { this, arguments });
 				}
 			}
 		}
