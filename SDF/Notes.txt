@@ -1,3 +1,55 @@
+05/18/2006 (Revision 7)
+
+Man, argument (nee parameter) validation is cool. I added an SDFArgument attribute with a Required property and we're off to the races. I'm debating about whether or not we're going to continue handing down the Hashtable to the Evaluate method, or whether everything is going to be through properties. The Print expression looks like this now:
+
+public class Print
+{
+	[SDFArgument(Required=true)]
+	public string message
+	{
+		set
+		{
+		}
+	}
+
+    public void Evaluate(SDF sdf, Hashtable arguments)
+    {
+        Console.WriteLine(arguments["message"]);
+    }
+}
+
+Note that the message property is present with an empty setter, and that he continues to get the argument from the hashtable in Evaluate. Not sure how I feel about all of this yet. This whole relationship between the hashtable and the properties is making me a bit queasy. But I'm not coming up with a nice way to do argument validation without properties.
+
+One other thing I was thinking about was the fact that you could do something really neat with the arguments which might actually handle the validation aspect. Imagine something like this:
+
+[SDFArgument(Required=true)]
+public IPAddress ipaddress
+{
+	set
+	{
+		ipaddressVar = value;
+	}
+}
+
+and if the framework did the right thing and called the static Parse method on IPAddress, and then gave that created object to the set method for the property. Any exception in parse would be reported. I gotta think about that.
+
+TODO
+
+* Parameter validation
+
+    * Too many parameters
+
+    * Richer parameter types
+
+* Make makefile suck less
+
+    * build to build directory
+    
+    * clean target
+    
+    * Smarter building of DLLs (.cs.dll rule or something)
+
+
 05/18/2006 (Revision 6)
 
 I added an SDF parameter to Evaluate, and a default expression called LoadExpressions. So now you can do:

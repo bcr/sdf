@@ -98,6 +98,69 @@ namespace SDF
 
 			Assert.AreEqual("I am Foo\nI am Foo\n", this.output.ToString());
 		}
+
+		public class FooWithRequiredParam
+		{
+			string argumentVar;
+
+			[SDFArgument(Required=true)]
+			public string argument
+			{
+				set
+				{
+					argumentVar = value;
+				}
+			}
+
+			public void Evaluate(SDF sdf, Hashtable arguments)
+			{
+				System.Console.WriteLine("I am FooWithRequiredParam {0}", argumentVar);
+			}
+		}
+
+		[Test]
+		[ExpectedException(typeof(SDFException))]
+		public void TestExpressionRequiredParamMissing()
+		{
+			this.sdf.AddType(typeof(FooWithRequiredParam));
+
+			this.sdf.Eval("FooWithRequiredParam");
+		}
+
+		[Test]
+		public void TestExpressionRequiredParamPresent()
+		{
+			this.sdf.AddType(typeof(FooWithRequiredParam));
+
+			this.sdf.Eval("FooWithRequiredParam argument='hear me roar'");
+
+			Assert.AreEqual("I am FooWithRequiredParam hear me roar\n", this.output.ToString());
+		}
+	}
+
+	public class SDFArgument : Attribute
+	{
+		private bool requiredVar;
+
+		public bool Required
+		{
+			get
+			{
+				return requiredVar;
+			}
+			
+			set
+			{
+				requiredVar = value;
+			}
+		}
+	}
+
+	public class SDFException : ApplicationException
+	{
+		public SDFException(string reason) : base(reason)
+		{
+		}
 	}
 
 	public class SDF
@@ -156,6 +219,30 @@ namespace SDF
 				{
 					Type type = (Type) expressions[expression];
 					object o = type.GetConstructor(new Type[0]).Invoke(null);
+					
+					// Set arguments to properties if required
+
+					{
+						// For each property, check to see if it has an SDFArgument attribute
+
+						foreach (PropertyInfo property in type.GetProperties())
+						{
+							foreach (SDFArgument argument in property.GetCustomAttributes(typeof(SDFArgument), false))
+							{
+								// If the argument is required, then whine if it wasn't specified
+
+								if ((argument.Required) && (!arguments.Contains(property.Name)))
+								{
+									throw new SDFException("Rquired argument '" + property.Name + "' was not specified");
+								}
+								
+								// Set the property
+
+								property.GetSetMethod().Invoke(o, new Object[] { arguments[property.Name] });
+							}
+						}
+					}
+
 					type.GetMethod("Evaluate").Invoke(o, new Object[] { this, arguments });
 				}
 			}
