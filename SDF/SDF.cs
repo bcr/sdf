@@ -42,7 +42,7 @@ namespace SDF
 		{
 			this.output = new StandardOutputRedirector();
 			this.sdf = new SDF();
-			this.sdf.Eval("LoadExpressions filename='SDF.Print.dll'");
+			this.sdf.Eval(null, "LoadExpressions filename='SDF.Print.dll'");
 		}
 
 		[TearDown]
@@ -54,7 +54,7 @@ namespace SDF
 		[Test]
 		public void TestPrint()
 		{
-			this.sdf.Eval("Print message='Hello, world'");
+			this.sdf.Eval(null, "Print message='Hello, world'");
 
 			Assert.AreEqual("Hello, world\n", this.output.ToString());
 		}
@@ -62,7 +62,7 @@ namespace SDF
 		[Test]
 		public void TestPrintUpper()
 		{
-			this.sdf.Eval("PrintUpper message='Hello, world'");
+			this.sdf.Eval(null, "PrintUpper message='Hello, world'");
 
 			Assert.AreEqual("HELLO, WORLD\n", this.output.ToString());
 		}
@@ -70,7 +70,7 @@ namespace SDF
 		[Test]
 		public void TestTwoExpressions()
 		{
-			this.sdf.Eval(
+			this.sdf.Eval(null, 
 				"Print message='Hello, world'\n" +
 				"PrintUpper message='Hello, world'\n"
 				);
@@ -80,7 +80,7 @@ namespace SDF
 
 		public class Foo
 		{
-			public void Evaluate(SDF sdf, Hashtable arguments)
+			public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
 			{
 				System.Console.WriteLine("I am Foo");
 			}
@@ -91,7 +91,7 @@ namespace SDF
 		{
 			this.sdf.AddType(typeof(Foo));
 
-			this.sdf.Eval(
+			this.sdf.Eval(null, 
 				"Foo\n" +
 				"Foo\n"
 				);
@@ -112,7 +112,7 @@ namespace SDF
 				}
 			}
 
-			public void Evaluate(SDF sdf, Hashtable arguments)
+			public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
 			{
 				System.Console.WriteLine("I am FooWithRequiredParam {0}", argumentVar);
 			}
@@ -124,7 +124,7 @@ namespace SDF
 		{
 			this.sdf.AddType(typeof(FooWithRequiredParam));
 
-			this.sdf.Eval("FooWithRequiredParam");
+			this.sdf.Eval(null, "FooWithRequiredParam");
 		}
 
 		[Test]
@@ -132,9 +132,43 @@ namespace SDF
 		{
 			this.sdf.AddType(typeof(FooWithRequiredParam));
 
-			this.sdf.Eval("FooWithRequiredParam argument='hear me roar'");
+			this.sdf.Eval(null, "FooWithRequiredParam argument='hear me roar'");
 
 			Assert.AreEqual("I am FooWithRequiredParam hear me roar\n", this.output.ToString());
+		}
+
+		public class FooWithRequiredState
+		{
+			[SDFStateRequired(typeof(string))]
+			public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+			{
+				System.Console.WriteLine("I am FooWithRequiredState {0}", state[typeof(string)]);
+			}
+		}
+
+		[Test]
+		[ExpectedException(typeof(SDFException))]
+		public void TestExpressionRequiredStateMissing()
+		{
+			SDFState state = new SDFState();
+			
+			this.sdf.AddType(typeof(FooWithRequiredState));
+
+			this.sdf.Eval(state, "FooWithRequiredState");
+		}
+
+		[Test]
+		public void TestExpressionRequiredStatePresent()
+		{
+			SDFState state = new SDFState();
+
+			state += "hear me roar";
+
+			this.sdf.AddType(typeof(FooWithRequiredState));
+
+			this.sdf.Eval(state, "FooWithRequiredState");
+
+			Assert.AreEqual("I am FooWithRequiredState hear me roar\n", this.output.ToString());
 		}
 	}
 
@@ -156,10 +190,67 @@ namespace SDF
 		}
 	}
 
+	public class SDFStateRequired : Attribute
+	{
+		private Type typeVar;
+
+		public Type RequiredType
+		{
+			get
+			{
+				return this.typeVar;
+			}
+
+			set
+			{
+				this.typeVar = value;
+			}
+		}
+
+		public SDFStateRequired(Type type)
+		{
+			RequiredType = type;
+		}
+	}
+
 	public class SDFException : ApplicationException
 	{
 		public SDFException(string reason) : base(reason)
 		{
+		}
+	}
+
+	public class SDFState
+	{
+		private ArrayList state = new ArrayList();
+
+		public object this[Type type]
+		{
+			get
+			{
+				Object found = null;
+
+				foreach (Object o in state)
+				{
+					if (o.GetType() == type)
+					{
+						found = o;
+					}
+				}
+
+				return found;
+			}
+		}
+
+		public void AddState(object o)
+		{
+			this.state.Add(o);
+		}
+
+		public static SDFState operator+(SDFState state, Object o)
+		{
+			state.AddState(o);
+			return state;
 		}
 	}
 
@@ -169,7 +260,7 @@ namespace SDF
 
 		public class LoadExpressions
 		{
-			public void Evaluate(SDF sdf, Hashtable arguments)
+			public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
 			{
 				sdf.AddAssembly((string) arguments["filename"]);
 			}
@@ -194,7 +285,7 @@ namespace SDF
 			expressions[type.Name] = type;
 		}
 
-		public void Eval(string eval)
+		public void Eval(SDFState state, string eval)
 		{
 			string expression = null;
 			Hashtable arguments = null;
@@ -243,7 +334,23 @@ namespace SDF
 						}
 					}
 
-					type.GetMethod("Evaluate").Invoke(o, new Object[] { this, arguments });
+					MethodInfo method = type.GetMethod("Evaluate");
+					
+					{
+						// Now check to see if there's any required state
+						
+						foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
+						{
+							if (state[stateRequired.RequiredType] == null)
+							{
+								throw new SDFException("Required state '" + stateRequired.RequiredType.Name + "' not found");
+							}
+						}
+					}
+
+					// Finally call the method
+
+					method.Invoke(o, new Object[] { this, state, arguments });
 				}
 			}
 		}

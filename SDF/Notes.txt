@@ -1,3 +1,38 @@
+05/18/2006 (Revision 8)
+
+I jumped the TODO queue and added state support. Now there's an SDFState object that can be sent down to Eval, and you can preload that with various objects that you want access to in your expressions. I also added support for the SDFStateRequired attribute to indicate objects that you require to be present.
+
+[SDFStateRequired(typeof(string))]
+public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+{
+	System.Console.WriteLine("I am FooWithRequiredState {0}", state[typeof(string)]);
+}
+
+So before calling this, you set up your SDFState
+
+SDFState state = new SDFState();
+
+state += "hear me roar";
+
+TODO
+
+* Set up Trac to track stuff in Notes.txt
+
+* Parameter validation
+
+    * Too many parameters
+
+    * Richer parameter types
+
+* Make makefile suck less
+
+    * build to build directory
+    
+    * clean target
+    
+    * Smarter building of DLLs (.cs.dll rule or something)
+
+
 05/18/2006 (Revision 7)
 
 Man, argument (nee parameter) validation is cool. I added an SDFArgument attribute with a Required property and we're off to the races. I'm debating about whether or not we're going to continue handing down the Hashtable to the Evaluate method, or whether everything is going to be through properties. The Print expression looks like this now:
