@@ -343,7 +343,7 @@ namespace SDF
                         {
                             if (state[stateRequired.RequiredType] == null)
                             {
-                                throw new SDFException(String.Format("Required state '{0}' not found", stateRequired.RequiredType.Name));
+                                throw new SDFException(String.Format("Required state '{0}' was not found", stateRequired.RequiredType.Name));
                             }
                         }
                     }
