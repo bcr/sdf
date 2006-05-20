@@ -1,38 +1,38 @@
 namespace SDF.Print
 {
-	using System;
+    using System;
 
-	using System.Collections;
+    using System.Collections;
 
-	public class Print
-	{
-		[SDFArgument(Required=true)]
-		public string message
-		{
-			set
-			{
-			}
-		}
+    public class Print
+    {
+        [SDFArgument(Required=true)]
+        public string message
+        {
+            set
+            {
+            }
+        }
 
-	    public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
-	    {
-	        Console.WriteLine(arguments["message"]);
-	    }
-	}
+        public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+        {
+            Console.WriteLine(arguments["message"]);
+        }
+    }
 
-	public class PrintUpper
-	{
-		[SDFArgument(Required=true)]
-		public string message
-		{
-			set
-			{
-			}
-		}
+    public class PrintUpper
+    {
+        [SDFArgument(Required=true)]
+        public string message
+        {
+            set
+            {
+            }
+        }
 
-	    public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
-	    {
-			Console.WriteLine(((string) arguments["message"]).ToUpper());
-	    }
-	}
+        public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+        {
+            Console.WriteLine(((string) arguments["message"]).ToUpper());
+        }
+    }
 }
