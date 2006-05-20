@@ -7,7 +7,7 @@ namespace SDF
     using System.IO;
     using System.Text.RegularExpressions;
     using System.Reflection;
-        
+
     [TestFixture]
     public class TestEval
     {
@@ -27,7 +27,7 @@ namespace SDF
             {
                 Console.SetOut(this.oldWriter);
             }
-            
+
             public override string ToString()
             {
                 return this.outputWriter.ToString();
@@ -36,7 +36,7 @@ namespace SDF
 
         private StandardOutputRedirector output;
         private SDF sdf;
-        
+
         [SetUp]
         public void SetUp()
         {
@@ -70,7 +70,7 @@ namespace SDF
         [Test]
         public void TestTwoExpressions()
         {
-            this.sdf.Eval(null, 
+            this.sdf.Eval(null,
                 "Print message='Hello, world'\n" +
                 "PrintUpper message='Hello, world'\n"
                 );
@@ -91,7 +91,7 @@ namespace SDF
         {
             this.sdf.AddType(typeof(Foo));
 
-            this.sdf.Eval(null, 
+            this.sdf.Eval(null,
                 "Foo\n" +
                 "Foo\n"
                 );
@@ -151,7 +151,7 @@ namespace SDF
         public void TestExpressionRequiredStateMissing()
         {
             SDFState state = new SDFState();
-            
+
             this.sdf.AddType(typeof(FooWithRequiredState));
 
             this.sdf.Eval(state, "FooWithRequiredState");
@@ -182,7 +182,7 @@ namespace SDF
             {
                 return requiredVar;
             }
-            
+
             set
             {
                 requiredVar = value;
@@ -291,7 +291,7 @@ namespace SDF
             Hashtable arguments = null;
 
             Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
-            
+
             foreach (Match match in regex.Matches(eval))
             {
                 {
@@ -310,7 +310,7 @@ namespace SDF
                 {
                     Type type = (Type) expressions[expression];
                     object o = type.GetConstructor(new Type[0]).Invoke(null);
-                    
+
                     // Set arguments to properties if required
 
                     {
@@ -326,7 +326,7 @@ namespace SDF
                                 {
                                     throw new SDFException(String.Format("Rquired argument '{0}' was not specified", property.Name));
                                 }
-                                
+
                                 // Set the property
 
                                 property.GetSetMethod().Invoke(o, new Object[] { arguments[property.Name] });
@@ -335,10 +335,10 @@ namespace SDF
                     }
 
                     MethodInfo method = type.GetMethod("Evaluate");
-                    
+
                     {
                         // Now check to see if there's any required state
-                        
+
                         foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
                         {
                             if (state[stateRequired.RequiredType] == null)
