@@ -1,3 +1,70 @@
+05/19/2006
+
+Trying to figure out what a web server might look like. Essentially you have requests and responses so you need something like this:
+
+Expression name='Foo'
+	SetResponseData data='<h1>Foo to you too!</h1>'
+
+Expression name='Bar'
+	SetResponseData data='<h1>No bars around here.</h1>'
+
+Expression name='Unknown'
+	SetResponseData data='Whatchoo talkin' 'bout Willis?</h1>'
+
+Expression name='ResponseHandler'
+	Regex value='$[request-line]' regex='/([^/]+)$/'
+		Switch value='$[match,1]'
+			Case value='Foo'
+				Foo
+			Case value='Bar'
+				Bar
+			Default
+				Unknown
+
+And then just hook up a server to point to ResponseHandler.
+
+So maybe what I'm going to work on next is calling an expression:
+
+Expression name='Foo'
+	Print message='Hello, this is Foo'
+
+Expression name='Bar'
+	Print message='Bar here'
+
+Foo
+Bar
+
+which seems to entail two different things:
+
+* The ability to define a custom expression via an "Expression" expression. Expression.
+
+* Nesting
+
+I've been somewhat avoiding the nesting aspect so far. In the current syntax, the LWSP before the expression name dictates the indenting level. You can only indent one level at a time, but you can outdent multiple levels at a time. I'm sure there's writing about this for Python, so I might be able to look this up somewhere and see how they deal with it. I imagine for Old Schoolers there can be an alternative syntax that uses squiggle braces, and I imagine that both can probably live side-by-side pretty easily.
+
+So for this example, I'm not sure exactly what to do. The basic Eval loop right now is something like:
+
+For each expression parsed out of the stream
+	Instantiate an object of that type of expression
+	Call Evaluate on that object
+
+So maybe this now becomes:
+
+
+Push a new empty list of expressions
+For each expression parsed out of the stream
+	If the indent level is less than the last indent level
+		Remove the difference in levels from the list stack
+	If the indent level is greater than the last indent level
+		Push a new empty list of expressions
+	Instantiate an object of that type of expression
+	Add the object to the current list
+	
+And at the end you have a list of expressions. Then when you want to execute, you just execute the list.
+
+This kinda needs work.
+
+
 05/18/2006 (Revision 8)
 
 I jumped the TODO queue and added state support. Now there's an SDFState object that can be sent down to Eval, and you can preload that with various objects that you want access to in your expressions. I also added support for the SDFStateRequired attribute to indicate objects that you require to be present.
