@@ -324,7 +324,7 @@ namespace SDF
 
 								if ((argument.Required) && (!arguments.Contains(property.Name)))
 								{
-									throw new SDFException("Rquired argument '" + property.Name + "' was not specified");
+									throw new SDFException(String.Format("Rquired argument '{0}' was not specified", property.Name));
 								}
 								
 								// Set the property
@@ -343,7 +343,7 @@ namespace SDF
 						{
 							if (state[stateRequired.RequiredType] == null)
 							{
-								throw new SDFException("Required state '" + stateRequired.RequiredType.Name + "' not found");
+								throw new SDFException(String.Format("Required state '{0}' not found", stateRequired.RequiredType.Name));
 							}
 						}
 					}
