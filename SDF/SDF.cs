@@ -82,7 +82,7 @@ namespace SDF
 
         public class Foo
         {
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
                 System.Console.WriteLine("I am Foo");
             }
@@ -116,7 +116,7 @@ namespace SDF
                 this.name = name;
             }
 
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
                 System.Console.WriteLine("I am {0}", this.name);
             }
@@ -143,7 +143,7 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
                 System.Console.WriteLine("I am FooWithRequiredParam {0}", argumentVar);
             }
@@ -171,7 +171,7 @@ namespace SDF
         public class FooWithRequiredState
         {
             [SDFStateRequired(typeof(string))]
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
                 System.Console.WriteLine("I am FooWithRequiredState {0}", state[typeof(string)]);
             }
@@ -327,7 +327,7 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
                 ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
             }
@@ -343,7 +343,7 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, Hashtable arguments)
             {
             }
         }
@@ -604,7 +604,7 @@ namespace SDF
                         SDFParsedExpression expression = (SDFParsedExpression) o;
                         MethodInfo method = expression.Expression.GetType().GetMethod("Evaluate");
 
-                        method.Invoke(expression.Expression, new Object[] { sdf, state, expression.Arguments });
+                        method.Invoke(expression.Expression, new Object[] { state, expression.Arguments });
                     }
                 }
             }
