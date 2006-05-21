@@ -102,6 +102,34 @@ namespace SDF
             Assert.AreEqual("I am Foo\nI am Foo\n", this.output.ToString());
         }
 
+        public class FooAsFactory
+        {
+            private string name = null;
+
+            public static object CreateExpression(string name, Hashtable arguments)
+            {
+                return new FooAsFactory(name);
+            }
+
+            private FooAsFactory(string name)
+            {
+                this.name = name;
+            }
+
+            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            {
+                System.Console.WriteLine("I am {0}", this.name);
+            }
+        }
+
+        [Test]
+        public void TestFooAsFactory()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooAsFactory));
+
+            this.sdf.Eval(state, "FooAsFactory");
+        }
+
         public class FooWithRequiredParam
         {
             string argumentVar;
@@ -603,13 +631,25 @@ namespace SDF
 
                     {
                         Type type = expressions[expression.ExpressionName];
+                        object newObject = null;
 
                         if (type == null)
                         {
                             throw new SDFException(String.Format("Unknown expression '{0}'", expression.ExpressionName));
                         }
 
-                        object newObject = type.GetConstructor(new Type[0]).Invoke(null);
+                        {
+                            MethodInfo method = type.GetMethod("CreateExpression");
+
+                            if (method != null)
+                            {
+                                newObject = method.Invoke(null, new Object[] { expression.ExpressionName, expression.Arguments });
+                            }
+                            else
+                            {
+                                newObject = type.GetConstructor(new Type[0]).Invoke(null);
+                            }
+                        }
 
                         // Set arguments to properties if required
 
@@ -634,9 +674,9 @@ namespace SDF
                             }
                         }
 
-                        MethodInfo method = type.GetMethod("Evaluate");
-
                         {
+                            MethodInfo method = type.GetMethod("Evaluate");
+
                             // Now check to see if there's any required state
 
                             foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
