@@ -363,7 +363,7 @@ namespace SDF
         {
             private string expressionVar = null;
             private Hashtable argumentsVar = null;
-            private IComparable indentLevelVar = null;
+            private int indentLevelVar = 0;
 
             public string Expression
             {
@@ -381,7 +381,7 @@ namespace SDF
                 }
             }
 
-            public IComparable IndentLevel
+            public int IndentLevel
             {
                 get
                 {
@@ -389,11 +389,38 @@ namespace SDF
                 }
             }
 
-            public SDFParsedExpression(string expression, Hashtable arguments, IComparable indentLevel)
+            public SDFParsedExpression(string expression, Hashtable arguments, int indentLevel)
             {
                 this.expressionVar = expression;
                 this.argumentsVar = arguments;
                 this.indentLevelVar = indentLevel;
+            }
+        }
+
+        [TestFixture]
+        public class TestSDFParsedExpressionGenerator
+        {
+            [Test]
+            public void TestIndentLevel()
+            {
+                ArrayList list = new ArrayList();
+
+                SDFParsedExpressionGenerator generator = new SDFParsedExpressionGenerator(
+                    "    Foo arg1='1'\n" +
+                    " arg2='2'\n" +
+                    "\n" +
+                    "    \n" +
+                    "    Bar arg1='1'\n" +
+                    "Baz\n"
+                    );
+
+                foreach (SDFParsedExpression expression in generator)
+                {
+                    list.Add(expression);
+                }
+
+                Assert.IsTrue(((SDFParsedExpression) list[0]).IndentLevel == ((SDFParsedExpression) list[1]).IndentLevel);
+                Assert.IsTrue(((SDFParsedExpression) list[2]).IndentLevel < ((SDFParsedExpression) list[1]).IndentLevel);
             }
         }
 
@@ -403,7 +430,7 @@ namespace SDF
 
             public SDFParsedExpressionGenerator(string expressions)
             {
-                Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
+                Regex regex = new Regex(@"\n?(?<indent>[ \t]*)(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
 
                 this.expressions = new ArrayList();
                 foreach (Match match in regex.Matches(expressions))
@@ -424,7 +451,7 @@ namespace SDF
                         }
                     }
 
-                    this.expressions.Add(new SDFParsedExpression(expression, arguments, 0));
+                    this.expressions.Add(new SDFParsedExpression(expression, arguments, match.Groups["indent"].Length));
                 }
             }
 
