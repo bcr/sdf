@@ -183,10 +183,10 @@ namespace SDF
         {
             this.sdf.Eval(
                 this.state,
-                "Expression name='Foo'\n" +
-                "    Print message='Foo'\n" +
                 "Expression name='Bar'\n" +
                 "    Print message='Bar'\n" +
+                "Expression name='Foo'\n" +
+                "    Print message='Foo'\n" +
                 "Foo\n" +
                 "Bar\n"
                 );
@@ -305,6 +305,21 @@ namespace SDF
             }
         }
 
+        private class Expression
+        {
+            [SDFArgument(Required=true)]
+            public string name
+            {
+                set
+                {
+                }
+            }
+
+            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            {
+            }
+        }
+
         public void AddAssembly(string assemblyFilename)
         {
             Assembly assembly = Assembly.LoadFrom(assemblyFilename);
@@ -335,41 +350,28 @@ namespace SDF
         public SDFExpressionRegistry()
         {
             AddType(typeof(LoadExpressions));
+            AddType(typeof(Expression));
         }
     }
 
     public class SDF
     {
-        private class Expression
-        {
-            [SDFArgument(Required=true)]
-            public string name
-            {
-                set
-                {
-                }
-            }
-
-            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
-            {
-            }
-        }
-
         public SDF()
         {
         }
 
-        private class SDFParsedExpression
+        public class SDFParsedExpression
         {
-            private string expressionVar = null;
+            private string expressionNameVar = null;
             private Hashtable argumentsVar = null;
             private int indentLevelVar = 0;
+            private Object expressionVar = null;
 
-            public string Expression
+            public string ExpressionName
             {
                 get
                 {
-                    return this.expressionVar;
+                    return this.expressionNameVar;
                 }
             }
 
@@ -389,24 +391,41 @@ namespace SDF
                 }
             }
 
-            public SDFParsedExpression(string expression, Hashtable arguments, int indentLevel)
+            public Object Expression
             {
-                this.expressionVar = expression;
+                get
+                {
+                    return this.expressionVar;
+                }
+
+                set
+                {
+                    this.expressionVar = value;
+                }
+            }
+
+            public SDFParsedExpression(string expressionName, Hashtable arguments, int indentLevel)
+            {
+                this.expressionNameVar = expressionName;
                 this.argumentsVar = arguments;
                 this.indentLevelVar = indentLevel;
             }
         }
 
         [TestFixture]
-        public class TestSDFParsedExpressionGenerator
+        public class TestSDFExpressionParser
         {
             [Test]
             public void TestIndentLevel()
             {
-                ArrayList list = new ArrayList();
+                SDFParsedExpressionList expressionList;
+                SDFParsedExpression fooExpression;
+                SDFParsedExpression barExpression;
+                SDFParsedExpression bazExpression;
+                IEnumerator enumerator = null;
 
-                SDFParsedExpressionGenerator generator = new SDFParsedExpressionGenerator(
-                    "    Foo arg1='1'\n" +
+                expressionList = SDFExpressionParser.Parse(
+                    "Foo arg1='1'\n" +
                     " arg2='2'\n" +
                     "\n" +
                     "    \n" +
@@ -414,29 +433,49 @@ namespace SDF
                     "Baz\n"
                     );
 
-                foreach (SDFParsedExpression expression in generator)
+                enumerator = expressionList.GetEnumerator();
+                Assert.IsTrue(enumerator.MoveNext());
+                fooExpression = (SDFParsedExpression) enumerator.Current;
+                Assert.AreEqual("Foo", fooExpression.ExpressionName);
+                Assert.IsTrue(enumerator.MoveNext());
+
                 {
-                    list.Add(expression);
+                    SDFParsedExpressionList fooChildren = (SDFParsedExpressionList) enumerator.Current;
+                    Assert.IsTrue(enumerator.MoveNext());
+                    IEnumerator fooEnumerator = fooChildren.GetEnumerator();
+                    Assert.IsTrue(fooEnumerator.MoveNext());
+                    barExpression = (SDFParsedExpression) fooEnumerator.Current;
+                    Assert.AreEqual("Bar", barExpression.ExpressionName);
+                    Assert.IsFalse(fooEnumerator.MoveNext());
                 }
 
-                Assert.IsTrue(((SDFParsedExpression) list[0]).IndentLevel == ((SDFParsedExpression) list[1]).IndentLevel);
-                Assert.IsTrue(((SDFParsedExpression) list[2]).IndentLevel < ((SDFParsedExpression) list[1]).IndentLevel);
+                bazExpression = (SDFParsedExpression) enumerator.Current;
+                Assert.IsFalse(enumerator.MoveNext());
+
+                Assert.AreEqual("Foo", fooExpression.ExpressionName);
+                Assert.AreEqual("Bar", barExpression.ExpressionName);
+                Assert.AreEqual("Baz", bazExpression.ExpressionName);
+
+                Assert.IsTrue(fooExpression.IndentLevel == bazExpression.IndentLevel);
+                Assert.IsTrue(barExpression.IndentLevel > bazExpression.IndentLevel);
             }
         }
 
-        private class SDFParsedExpressionGenerator : IEnumerable
+        private class SDFExpressionParser
         {
-            private ArrayList expressions = null;
-
-            public SDFParsedExpressionGenerator(string expressions)
+            public static SDFParsedExpressionList Parse(string expressions)
             {
                 Regex regex = new Regex(@"\n?(?<indent>[ \t]*)(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
+                SDFParsedExpressionList currentList = new SDFParsedExpressionList();
+                SDFParsedExpressionList rootList = currentList;
+                int lastIndentLevel = -1;
+                Stack expressionListStack = new Stack();
 
-                this.expressions = new ArrayList();
                 foreach (Match match in regex.Matches(expressions))
                 {
                     string expression = null;
                     Hashtable arguments = null;
+                    int currentIndentLevel = match.Groups["indent"].Length;
 
                     {
                         Group names = match.Groups["name"];
@@ -451,74 +490,177 @@ namespace SDF
                         }
                     }
 
-                    this.expressions.Add(new SDFParsedExpression(expression, arguments, match.Groups["indent"].Length));
+                    if (lastIndentLevel == -1)
+                    {
+                        lastIndentLevel = currentIndentLevel;
+                    }
+
+                    if (currentIndentLevel > lastIndentLevel)
+                    {
+                        SDFParsedExpressionList lastList = currentList;
+
+                        // Push the current guy on the stack, set up a new one
+
+                        expressionListStack.Push(currentList);
+                        currentList = new SDFParsedExpressionList();
+                        lastList += currentList;
+                    }
+                    else if (currentIndentLevel < lastIndentLevel)
+                    {
+                        // Pop lists until we get to this level
+                        while (currentIndentLevel < currentList.IndentLevel)
+                        {
+                            currentList = (SDFParsedExpressionList) expressionListStack.Pop();
+                        }
+                    }
+
+                    currentList += new SDFParsedExpression(expression, arguments, currentIndentLevel);
+                    lastIndentLevel = currentIndentLevel;
                 }
+
+                return rootList;
             }
 
             public IEnumerator GetEnumerator()
             {
-                return this.expressions.GetEnumerator();
+                return null;
+            }
+        }
+
+        public class SDFParsedExpressionList : IEnumerable
+        {
+            private ArrayList expressionList = new ArrayList();
+
+            public int IndentLevel
+            {
+                get
+                {
+                    return ((SDFParsedExpression) expressionList[0]).IndentLevel;
+                }
+            }
+
+            public static SDFParsedExpressionList operator+(SDFParsedExpressionList list, SDFParsedExpression parsedExpression)
+            {
+                list.AddExpression(parsedExpression);
+                return list;
+            }
+
+            public static SDFParsedExpressionList operator+(SDFParsedExpressionList list, SDFParsedExpressionList parsedExpressionList)
+            {
+                list.AddExpressionList(parsedExpressionList);
+                return list;
+            }
+
+            public void AddExpression(SDFParsedExpression parsedExpression)
+            {
+                this.expressionList.Add(parsedExpression);
+            }
+
+            public void AddExpressionList(SDFParsedExpressionList parsedExpressionList)
+            {
+                this.expressionList.Add(parsedExpressionList);
+            }
+
+            public IEnumerator GetEnumerator()
+            {
+                return this.expressionList.GetEnumerator();
+            }
+
+            public static void Evaluate(SDFParsedExpressionList expressionList, SDFState state, SDF sdf)
+            {
+                foreach (Object o in expressionList)
+                {
+                    if (o is SDFParsedExpressionList)
+                    {
+                    }
+                    else
+                    {
+                        SDFParsedExpression expression = (SDFParsedExpression) o;
+                        MethodInfo method = expression.Expression.GetType().GetMethod("Evaluate");
+
+                        method.Invoke(expression.Expression, new Object[] { sdf, state, expression.Arguments });
+                    }
+                }
+            }
+
+            public void Evaluate(SDFState state, SDF sdf)
+            {
+                Evaluate(this, state, sdf);
+            }
+        }
+
+        public void Load(SDFParsedExpressionList expressionList, SDFState state)
+        {
+            SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
+
+            foreach (Object o in expressionList)
+            {
+                if (o is SDFParsedExpressionList)
+                {
+                    Load((SDFParsedExpressionList) o, state);
+                }
+                else
+                {
+                    SDFParsedExpression expression = (SDFParsedExpression) o;
+
+                    {
+                        Type type = expressions[expression.ExpressionName];
+
+                        if (type == null)
+                        {
+                            throw new SDFException(String.Format("Unknown expression '{0}'", expression.ExpressionName));
+                        }
+
+                        object newObject = type.GetConstructor(new Type[0]).Invoke(null);
+
+                        // Set arguments to properties if required
+
+                        {
+                            // For each property, check to see if it has an SDFArgument attribute
+
+                            foreach (PropertyInfo property in type.GetProperties())
+                            {
+                                foreach (SDFArgument argument in property.GetCustomAttributes(typeof(SDFArgument), false))
+                                {
+                                    // If the argument is required, then whine if it wasn't specified
+
+                                    if ((argument.Required) && (!expression.Arguments.Contains(property.Name)))
+                                    {
+                                        throw new SDFException(String.Format("Rquired argument '{0}' was not specified", property.Name));
+                                    }
+
+                                    // Set the property
+
+                                    property.GetSetMethod().Invoke(newObject, new Object[] { expression.Arguments[property.Name] });
+                                }
+                            }
+                        }
+
+                        MethodInfo method = type.GetMethod("Evaluate");
+
+                        {
+                            // Now check to see if there's any required state
+
+                            foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
+                            {
+                                if (state[stateRequired.RequiredType] == null)
+                                {
+                                    throw new SDFException(String.Format("Required state '{0}' was not found", stateRequired.RequiredType.Name));
+                                }
+                            }
+                        }
+
+                        expression.Expression = newObject;
+                    }
+                }
             }
         }
 
         public void Eval(SDFState state, string eval)
         {
-            SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
-
-            foreach (SDFParsedExpression expression in new SDFParsedExpressionGenerator(eval))
-            {
-                {
-                    Type type = expressions[expression.Expression];
-
-                    if (type == null)
-                    {
-                        throw new SDFException(String.Format("Unknown expression '{0}'", expression.Expression));
-                    }
-
-                    object o = type.GetConstructor(new Type[0]).Invoke(null);
-
-                    // Set arguments to properties if required
-
-                    {
-                        // For each property, check to see if it has an SDFArgument attribute
-
-                        foreach (PropertyInfo property in type.GetProperties())
-                        {
-                            foreach (SDFArgument argument in property.GetCustomAttributes(typeof(SDFArgument), false))
-                            {
-                                // If the argument is required, then whine if it wasn't specified
-
-                                if ((argument.Required) && (!expression.Arguments.Contains(property.Name)))
-                                {
-                                    throw new SDFException(String.Format("Rquired argument '{0}' was not specified", property.Name));
-                                }
-
-                                // Set the property
-
-                                property.GetSetMethod().Invoke(o, new Object[] { expression.Arguments[property.Name] });
-                            }
-                        }
-                    }
-
-                    MethodInfo method = type.GetMethod("Evaluate");
-
-                    {
-                        // Now check to see if there's any required state
-
-                        foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
-                        {
-                            if (state[stateRequired.RequiredType] == null)
-                            {
-                                throw new SDFException(String.Format("Required state '{0}' was not found", stateRequired.RequiredType.Name));
-                            }
-                        }
-                    }
-
-                    // Finally call the method
-
-                    method.Invoke(o, new Object[] { this, state, expression.Arguments });
-                }
-            }
+            SDFParsedExpressionList expressionList = SDFExpressionParser.Parse(eval);
+            Load(expressionList, state);
+            expressionList.Evaluate(state, this);
         }
     }
 }
