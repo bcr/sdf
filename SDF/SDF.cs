@@ -436,7 +436,6 @@ namespace SDF
                 enumerator = expressionList.GetEnumerator();
                 Assert.IsTrue(enumerator.MoveNext());
                 fooExpression = (SDFParsedExpression) enumerator.Current;
-                Assert.AreEqual("Foo", fooExpression.ExpressionName);
                 Assert.IsTrue(enumerator.MoveNext());
 
                 {
@@ -445,7 +444,6 @@ namespace SDF
                     IEnumerator fooEnumerator = fooChildren.GetEnumerator();
                     Assert.IsTrue(fooEnumerator.MoveNext());
                     barExpression = (SDFParsedExpression) fooEnumerator.Current;
-                    Assert.AreEqual("Bar", barExpression.ExpressionName);
                     Assert.IsFalse(fooEnumerator.MoveNext());
                 }
 
