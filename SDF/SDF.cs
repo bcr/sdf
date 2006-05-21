@@ -36,13 +36,15 @@ namespace SDF
 
         private StandardOutputRedirector output;
         private SDF sdf;
+        private SDFState state;
 
         [SetUp]
         public void SetUp()
         {
             this.output = new StandardOutputRedirector();
+            this.state = new SDFState();
             this.sdf = new SDF();
-            this.sdf.Eval(null, "LoadExpressions filename='SDF.Print.dll'");
+            this.sdf.Eval(this.state, "LoadExpressions filename='SDF.Print.dll'");
         }
 
         [TearDown]
@@ -54,7 +56,7 @@ namespace SDF
         [Test]
         public void TestPrint()
         {
-            this.sdf.Eval(null, "Print message='Hello, world'");
+            this.sdf.Eval(this.state, "Print message='Hello, world'");
 
             Assert.AreEqual("Hello, world\n", this.output.ToString());
         }
@@ -62,7 +64,7 @@ namespace SDF
         [Test]
         public void TestPrintUpper()
         {
-            this.sdf.Eval(null, "PrintUpper message='Hello, world'");
+            this.sdf.Eval(this.state, "PrintUpper message='Hello, world'");
 
             Assert.AreEqual("HELLO, WORLD\n", this.output.ToString());
         }
@@ -70,7 +72,7 @@ namespace SDF
         [Test]
         public void TestTwoExpressions()
         {
-            this.sdf.Eval(null,
+            this.sdf.Eval(this.state,
                 "Print message='Hello, world'\n" +
                 "PrintUpper message='Hello, world'\n"
                 );
@@ -89,9 +91,10 @@ namespace SDF
         [Test]
         public void TestTwoExpressionsNoParameters()
         {
-            this.sdf.AddType(typeof(Foo));
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(Foo));
 
-            this.sdf.Eval(null,
+            this.sdf.Eval(
+                state,
                 "Foo\n" +
                 "Foo\n"
                 );
@@ -122,17 +125,17 @@ namespace SDF
         [ExpectedException(typeof(SDFException))]
         public void TestExpressionRequiredParamMissing()
         {
-            this.sdf.AddType(typeof(FooWithRequiredParam));
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
 
-            this.sdf.Eval(null, "FooWithRequiredParam");
+            this.sdf.Eval(this.state, "FooWithRequiredParam");
         }
 
         [Test]
         public void TestExpressionRequiredParamPresent()
         {
-            this.sdf.AddType(typeof(FooWithRequiredParam));
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
 
-            this.sdf.Eval(null, "FooWithRequiredParam argument='hear me roar'");
+            this.sdf.Eval(this.state, "FooWithRequiredParam argument='hear me roar'");
 
             Assert.AreEqual("I am FooWithRequiredParam hear me roar\n", this.output.ToString());
         }
@@ -150,23 +153,19 @@ namespace SDF
         [ExpectedException(typeof(SDFException))]
         public void TestExpressionRequiredStateMissing()
         {
-            SDFState state = new SDFState();
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
 
-            this.sdf.AddType(typeof(FooWithRequiredState));
-
-            this.sdf.Eval(state, "FooWithRequiredState");
+            this.sdf.Eval(this.state, "FooWithRequiredState");
         }
 
         [Test]
         public void TestExpressionRequiredStatePresent()
         {
-            SDFState state = new SDFState();
+            this.state += "hear me roar";
 
-            state += "hear me roar";
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
 
-            this.sdf.AddType(typeof(FooWithRequiredState));
-
-            this.sdf.Eval(state, "FooWithRequiredState");
+            this.sdf.Eval(this.state, "FooWithRequiredState");
 
             Assert.AreEqual("I am FooWithRequiredState hear me roar\n", this.output.ToString());
         }
@@ -175,17 +174,15 @@ namespace SDF
         [ExpectedException(typeof(SDFException))]
         public void TestExpressionNotFound()
         {
-            this.sdf.Eval(null, "Foo");
+            this.sdf.Eval(this.state, "Foo");
         }
 
 /*
         [Test]
         public void TestCustomExpressions()
         {
-            SDFState state = new SDFState();
-
             this.sdf.Eval(
-                state,
+                this.state,
                 "Expression name='Foo'\n" +
                 "    Print message='Foo'\n" +
                 "Expression name='Bar'\n" +
@@ -197,21 +194,6 @@ namespace SDF
             Assert.AreEqual("Foo\nBar\n", this.output.ToString());
         }
 */
-    }
-
-    public class Expression
-    {
-        [SDFArgument(Required=true)]
-        public string name
-        {
-            set
-            {
-            }
-        }
-
-        public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
-        {
-        }
     }
 
     public class SDFArgument : Attribute
@@ -294,20 +276,70 @@ namespace SDF
             state.AddState(o);
             return state;
         }
+
+        public SDFState()
+        {
+            // The default state includes an expression registry. This may need to be refactored.
+
+            AddState(new SDFExpressionRegistry());
+        }
     }
 
-    public class SDF
+    public class SDFExpressionRegistry
     {
         private Hashtable expressions = new Hashtable();
 
         private class LoadExpressions
         {
+            [SDFArgument(Required=true)]
+            public string filename
+            {
+                set
+                {
+                }
+            }
+
             public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
             {
-                sdf.AddAssembly((string) arguments["filename"]);
+                ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
             }
         }
 
+        public void AddAssembly(string assemblyFilename)
+        {
+            Assembly assembly = Assembly.LoadFrom(assemblyFilename);
+            foreach (Type type in assembly.GetExportedTypes())
+            {
+                AddType(type);
+            }
+        }
+
+        public void AddType(Type type)
+        {
+            this[type.Name] = type;
+        }
+
+        public Type this[string index]
+        {
+            get
+            {
+                return (Type) this.expressions[index];
+            }
+
+            set
+            {
+                this.expressions[index] = value;
+            }
+        }
+
+        public SDFExpressionRegistry()
+        {
+            AddType(typeof(LoadExpressions));
+        }
+    }
+
+    public class SDF
+    {
         private class Expression
         {
             [SDFArgument(Required=true)]
@@ -325,22 +357,6 @@ namespace SDF
 
         public SDF()
         {
-            AddType(typeof(LoadExpressions));
-            AddType(typeof(Expression));
-        }
-
-        public void AddAssembly(string assemblyFilename)
-        {
-            Assembly assembly = Assembly.LoadFrom(assemblyFilename);
-            foreach (Type type in assembly.GetExportedTypes())
-            {
-                AddType(type);
-            }
-        }
-
-        public void AddType(Type type)
-        {
-            expressions[type.Name] = type;
         }
 
         private class SDFParsedExpression
@@ -420,10 +436,12 @@ namespace SDF
 
         public void Eval(SDFState state, string eval)
         {
+            SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
+
             foreach (SDFParsedExpression expression in new SDFParsedExpressionGenerator(eval))
             {
                 {
-                    Type type = (Type) expressions[expression.Expression];
+                    Type type = expressions[expression.Expression];
 
                     if (type == null)
                     {
