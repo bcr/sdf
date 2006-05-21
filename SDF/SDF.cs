@@ -170,6 +170,48 @@ namespace SDF
 
             Assert.AreEqual("I am FooWithRequiredState hear me roar\n", this.output.ToString());
         }
+
+        [Test]
+        [ExpectedException(typeof(SDFException))]
+        public void TestExpressionNotFound()
+        {
+            this.sdf.Eval(null, "Foo");
+        }
+
+/*
+        [Test]
+        public void TestCustomExpressions()
+        {
+            SDFState state = new SDFState();
+
+            this.sdf.Eval(
+                state,
+                "Expression name='Foo'\n" +
+                "    Print message='Foo'\n" +
+                "Expression name='Bar'\n" +
+                "    Print message='Bar'\n" +
+                "Foo\n" +
+                "Bar\n"
+                );
+
+            Assert.AreEqual("Foo\nBar\n", this.output.ToString());
+        }
+*/
+    }
+
+    public class Expression
+    {
+        [SDFArgument(Required=true)]
+        public string name
+        {
+            set
+            {
+            }
+        }
+
+        public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+        {
+        }
     }
 
     public class SDFArgument : Attribute
@@ -258,7 +300,7 @@ namespace SDF
     {
         private Hashtable expressions = new Hashtable();
 
-        public class LoadExpressions
+        private class LoadExpressions
         {
             public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
             {
@@ -266,9 +308,25 @@ namespace SDF
             }
         }
 
+        private class Expression
+        {
+            [SDFArgument(Required=true)]
+            public string name
+            {
+                set
+                {
+                }
+            }
+
+            public void Evaluate(SDF sdf, SDFState state, Hashtable arguments)
+            {
+            }
+        }
+
         public SDF()
         {
             AddType(typeof(LoadExpressions));
+            AddType(typeof(Expression));
         }
 
         public void AddAssembly(string assemblyFilename)
@@ -285,30 +343,93 @@ namespace SDF
             expressions[type.Name] = type;
         }
 
+        private class SDFParsedExpression
+        {
+            private string expressionVar = null;
+            private Hashtable argumentsVar = null;
+            private IComparable indentLevelVar = null;
+
+            public string Expression
+            {
+                get
+                {
+                    return this.expressionVar;
+                }
+            }
+
+            public Hashtable Arguments
+            {
+                get
+                {
+                    return this.argumentsVar;
+                }
+            }
+
+            public IComparable IndentLevel
+            {
+                get
+                {
+                    return this.indentLevelVar;
+                }
+            }
+
+            public SDFParsedExpression(string expression, Hashtable arguments, IComparable indentLevel)
+            {
+                this.expressionVar = expression;
+                this.argumentsVar = arguments;
+                this.indentLevelVar = indentLevel;
+            }
+        }
+
+        private class SDFParsedExpressionGenerator : IEnumerable
+        {
+            private ArrayList expressions = null;
+
+            public SDFParsedExpressionGenerator(string expressions)
+            {
+                Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
+
+                this.expressions = new ArrayList();
+                foreach (Match match in regex.Matches(expressions))
+                {
+                    string expression = null;
+                    Hashtable arguments = null;
+
+                    {
+                        Group names = match.Groups["name"];
+                        Group values = match.Groups["value"];
+
+                        expression = match.Groups["expression"].ToString();
+                        arguments = new Hashtable(names.Captures.Count);
+
+                        for (int counter = 0;counter < names.Captures.Count;++counter)
+                        {
+                            arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
+                        }
+                    }
+
+                    this.expressions.Add(new SDFParsedExpression(expression, arguments, 0));
+                }
+            }
+
+            public IEnumerator GetEnumerator()
+            {
+                return this.expressions.GetEnumerator();
+            }
+        }
+
         public void Eval(SDFState state, string eval)
         {
-            string expression = null;
-            Hashtable arguments = null;
-
-            Regex regex = new Regex(@"\s*(?<expression>\S+)(\s+(?<name>[^ \t=]+)\s*=\s*'(?<value>[^']+)')*");
-
-            foreach (Match match in regex.Matches(eval))
+            foreach (SDFParsedExpression expression in new SDFParsedExpressionGenerator(eval))
             {
                 {
-                    Group names = match.Groups["name"];
-                    Group values = match.Groups["value"];
+                    Type type = (Type) expressions[expression.Expression];
 
-                    expression = match.Groups["expression"].ToString();
-                    arguments = new Hashtable(names.Captures.Count);
-
-                    for (int counter = 0;counter < names.Captures.Count;++counter)
+                    if (type == null)
                     {
-                        arguments[names.Captures[counter].ToString()] = values.Captures[counter].ToString();
+                        throw new SDFException(String.Format("Unknown expression '{0}'", expression.Expression));
                     }
-                }
 
-                {
-                    Type type = (Type) expressions[expression];
                     object o = type.GetConstructor(new Type[0]).Invoke(null);
 
                     // Set arguments to properties if required
@@ -322,14 +443,14 @@ namespace SDF
                             {
                                 // If the argument is required, then whine if it wasn't specified
 
-                                if ((argument.Required) && (!arguments.Contains(property.Name)))
+                                if ((argument.Required) && (!expression.Arguments.Contains(property.Name)))
                                 {
                                     throw new SDFException(String.Format("Rquired argument '{0}' was not specified", property.Name));
                                 }
 
                                 // Set the property
 
-                                property.GetSetMethod().Invoke(o, new Object[] { arguments[property.Name] });
+                                property.GetSetMethod().Invoke(o, new Object[] { expression.Arguments[property.Name] });
                             }
                         }
                     }
@@ -350,7 +471,7 @@ namespace SDF
 
                     // Finally call the method
 
-                    method.Invoke(o, new Object[] { this, state, arguments });
+                    method.Invoke(o, new Object[] { this, state, expression.Arguments });
                 }
             }
         }
