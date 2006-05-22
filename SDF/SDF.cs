@@ -322,6 +322,25 @@ namespace SDF
 
             Assert.AreEqual("Foo\n", this.output.ToString());
         }
+
+        private class ReturnValuesClass
+        {
+            public void Evaluate()
+            {
+            }
+
+            public string ReturnEvaluate()
+            {
+                return "foo";
+            }
+        }
+
+        [Test]
+        public void TestReturnValues()
+        {
+            Assert.AreEqual(typeof(void), typeof(ReturnValuesClass).GetMethod("Evaluate").ReturnType);
+            Assert.AreEqual(typeof(string), typeof(ReturnValuesClass).GetMethod("ReturnEvaluate").ReturnType);
+        }
     }
 
     public class SDFArgument : Attribute
@@ -477,6 +496,11 @@ namespace SDF
                     this.rootExpressionChildren.Evaluate(state);
                 }
             }
+
+            public static void Register(SDFExpressionRegistry registry)
+            {
+                registry.AddObject(typeof(Expression).Name, new Expression());
+            }
         }
 
         public void AddAssembly(string assemblyFilename)
@@ -514,7 +538,7 @@ namespace SDF
         public SDFExpressionRegistry()
         {
             AddType(typeof(LoadExpressions));
-            AddObject(typeof(Expression).Name, new Expression());
+            Expression.Register(this);
         }
     }
 
