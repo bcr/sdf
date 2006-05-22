@@ -132,7 +132,7 @@ namespace SDF
         {
             string argumentVar;
 
-            [SDFArgument(Required=true)]
+            [SDFArgument]
             public string argument
             {
                 set
@@ -164,6 +164,34 @@ namespace SDF
             SDF.Eval(this.state, "FooWithRequiredParam argument='hear me roar'");
 
             Assert.AreEqual("I am FooWithRequiredParam hear me roar\n", this.output.ToString());
+        }
+
+        [SDFArgument(Name="argument")]
+        public class FooWithRequiredParamClassLevel
+        {
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
+            {
+                System.Console.WriteLine("I am FooWithRequiredParamClassLevel {0}", arguments["argument"]);
+            }
+        }
+
+        [Test]
+        [ExpectedException(typeof(SDFException), @"Rquired argument 'argument' was not specified")]
+        public void TestExpressionRequiredParamClassLevelMissing()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
+
+            SDF.Eval(this.state, "FooWithRequiredParamClassLevel");
+        }
+
+        [Test]
+        public void TestExpressionRequiredParamClassLevelPresent()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
+
+            SDF.Eval(this.state, "FooWithRequiredParamClassLevel argument='hear me roar'");
+
+            Assert.AreEqual("I am FooWithRequiredParamClassLevel hear me roar\n", this.output.ToString());
         }
 
         public class FooWithRequiredState
@@ -298,7 +326,8 @@ namespace SDF
 
     public class SDFArgument : Attribute
     {
-        private bool requiredVar;
+        private bool requiredVar = true;
+        private string nameVar = null;
 
         public bool Required
         {
@@ -310,6 +339,19 @@ namespace SDF
             set
             {
                 requiredVar = value;
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return nameVar;
+            }
+
+            set
+            {
+                nameVar = value;
             }
         }
     }
@@ -389,16 +431,9 @@ namespace SDF
     {
         private Hashtable expressions = new Hashtable();
 
+        [SDFArgument(Name="filename")]
         private class LoadExpressions
         {
-            [SDFArgument(Required=true)]
-            public string filename
-            {
-                set
-                {
-                }
-            }
-
             public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
             {
                 ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
@@ -781,6 +816,20 @@ namespace SDF
                             else
                             {
                                 newObject = type.GetConstructor(new Type[0]).Invoke(null);
+                            }
+                        }
+
+                        {
+                            // On the class, see if there are SDFArgument attributes
+
+                            foreach (SDFArgument argument in type.GetCustomAttributes(typeof(SDFArgument), false))
+                            {
+                                // If the argument is required, then whine if it wasn't specified
+
+                                if ((argument.Required) && (!expression.Arguments.Contains(argument.Name)))
+                                {
+                                    throw new SDFException(String.Format("Rquired argument '{0}' was not specified", argument.Name));
+                                }
                             }
                         }
 
