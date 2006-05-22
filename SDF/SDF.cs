@@ -281,6 +281,21 @@ namespace SDF
 
             Assert.AreEqual("Foo\nBar\nFoo\n", this.output.ToString());
         }
+
+        [Test]
+        public void TestLoadAndPrint()
+        {
+            // The point here is that LoadExpressions needs to update the state
+            // with the loaded expressions at load time, not at evaluate time
+
+            this.sdf.Eval(
+                new SDFState(),
+                "LoadExpressions filename='SDF.Print.dll'\n" +
+                "Print message='Foo'\n"
+                );
+
+            Assert.AreEqual("Foo\n", this.output.ToString());
+        }
     }
 
     public class SDFArgument : Attribute
@@ -386,15 +401,19 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDFState state, string name, Hashtable arguments)
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
             {
                 ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
+            }
+
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
+            {
             }
         }
 
         private class Expression
         {
-            private SDF.SDFParsedExpressionList children = null;
+            private SDF.SDFParsedExpressionList rootExpressionChildren = null;
 
             public object CreateExpression(SDFState state, string name, Hashtable arguments)
             {
@@ -410,16 +429,19 @@ namespace SDF
                 }
             }
 
-            public void PostCreateExpression(SDF.SDFParsedExpressionList children)
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
             {
-                this.children = children;
+                if (name == GetType().Name)
+                {
+                    this.rootExpressionChildren = children;
+                }
             }
 
             public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 if (name != GetType().Name)
                 {
-                    this.children.Evaluate(state);
+                    this.rootExpressionChildren.Evaluate(state);
                 }
             }
         }
@@ -703,27 +725,40 @@ namespace SDF
             }
         }
 
+        private void MaybeCallPostCreateExpression(SDFState state, SDFParsedExpression expression, SDFParsedExpressionList children)
+        {
+            MethodInfo postCreateMethod = expression.Expression.GetType().GetMethod("PostCreateExpression");
+            if (postCreateMethod != null)
+            {
+                postCreateMethod.Invoke(expression.Expression, new Object[] { state, expression.ExpressionName, expression.Arguments, children });
+            }
+        }
+
         public void Load(SDFParsedExpressionList expressionList, SDFState state)
         {
             SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
-            object newObject = null;
+            SDFParsedExpression expression = null;
 
             foreach (Object o in expressionList)
             {
                 if (o is SDFParsedExpressionList)
                 {
-                    MethodInfo postCreateMethod = newObject.GetType().GetMethod("PostCreateExpression");
-                    if (postCreateMethod != null)
-                    {
-                        postCreateMethod.Invoke(newObject, new Object[] { o });
-                    }
+                    MaybeCallPostCreateExpression(state, expression, (SDFParsedExpressionList) o);
+                    expression = null;
                     Load((SDFParsedExpressionList) o, state);
                 }
                 else
                 {
-                    SDFParsedExpression expression = (SDFParsedExpression) o;
+                    if (expression != null)
+                    {
+                        MaybeCallPostCreateExpression(state, expression, null);
+                    }
+
+                    expression = (SDFParsedExpression) o;
 
                     {
+                        object newObject = null;
+
                         object foundObject = expressions[expression.ExpressionName];
                         Type type = foundObject as Type;
 
@@ -791,6 +826,12 @@ namespace SDF
                         expression.Expression = newObject;
                     }
                 }
+            }
+
+            if (expression != null)
+            {
+                MaybeCallPostCreateExpression(state, expression, null);
+                expression = null;
             }
         }
 
