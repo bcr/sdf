@@ -626,7 +626,7 @@ namespace SDF
                 return this.expressionList.GetEnumerator();
             }
 
-            public static void Evaluate(SDFParsedExpressionList expressionList, SDFState state, SDF sdf)
+            public static void Evaluate(SDFParsedExpressionList expressionList, SDFState state)
             {
                 Object lastExpressionObject = null;
 
@@ -637,7 +637,7 @@ namespace SDF
                         if (lastExpressionObject != null)
                         {
                             lastExpressionObject = null;
-                            Evaluate((SDFParsedExpressionList) o, state, sdf);
+                            Evaluate((SDFParsedExpressionList) o, state);
                         }
                     }
                     else
@@ -650,9 +650,9 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDFState state, SDF sdf)
+            public void Evaluate(SDFState state)
             {
-                Evaluate(this, state, sdf);
+                Evaluate(this, state);
             }
         }
 
@@ -739,7 +739,7 @@ namespace SDF
         {
             SDFParsedExpressionList expressionList = SDFExpressionParser.Parse(eval);
             Load(expressionList, state);
-            expressionList.Evaluate(state, this);
+            expressionList.Evaluate(state);
         }
     }
 }
