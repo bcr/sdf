@@ -82,7 +82,7 @@ namespace SDF
 
         public class Foo
         {
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 System.Console.WriteLine("I am Foo");
             }
@@ -106,7 +106,7 @@ namespace SDF
         {
             private string name = null;
 
-            public static object CreateExpression(string name, Hashtable arguments)
+            public static object CreateExpression(SDFState state, string name, Hashtable arguments)
             {
                 return new FooAsFactory(name);
             }
@@ -116,7 +116,7 @@ namespace SDF
                 this.name = name;
             }
 
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 System.Console.WriteLine("I am {0}", this.name);
             }
@@ -143,7 +143,7 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 System.Console.WriteLine("I am FooWithRequiredParam {0}", argumentVar);
             }
@@ -171,7 +171,7 @@ namespace SDF
         public class FooWithRequiredState
         {
             [SDFStateRequired(typeof(string))]
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 System.Console.WriteLine("I am FooWithRequiredState {0}", state[typeof(string)]);
             }
@@ -216,7 +216,7 @@ namespace SDF
                 get { return this.isTrueVar; }
             }
 
-            public object Evaluate(SDFState state, Hashtable arguments)
+            public object Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 return isTrueVar;
             }
@@ -239,7 +239,32 @@ namespace SDF
             Assert.AreEqual("isTrue is true\nAlways output\n", this.output.ToString());
         }
 
-/*
+        private class ObjectBasedFactory
+        {
+            private class ObjectBasedFactoryInstance
+            {
+                public void Evaluate(SDFState state, string name, Hashtable arguments)
+                {
+                    Console.WriteLine("Dude this is {0}", arguments["message"]);
+                }
+            }
+
+            public object CreateExpression(SDFState state, string name, Hashtable arguments)
+            {
+                return new ObjectBasedFactoryInstance();
+            }
+        }
+
+        [Test]
+        public void TestObjectBasedFactory()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddObject("ObjectBasedFactoryDude", new ObjectBasedFactory());
+
+            this.sdf.Eval(this.state, "ObjectBasedFactoryDude message='yap'\n");
+
+            Assert.AreEqual("Dude this is yap\n", this.output.ToString());
+        }
+
         [Test]
         public void TestCustomExpressions()
         {
@@ -250,12 +275,12 @@ namespace SDF
                 "Expression name='Foo'\n" +
                 "    Print message='Foo'\n" +
                 "Foo\n" +
-                "Bar\n"
+                "Bar\n" +
+                "Foo\n"
                 );
 
-            Assert.AreEqual("Foo\nBar\n", this.output.ToString());
+            Assert.AreEqual("Foo\nBar\nFoo\n", this.output.ToString());
         }
-*/
     }
 
     public class SDFArgument : Attribute
@@ -361,7 +386,7 @@ namespace SDF
                 }
             }
 
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
                 ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
             }
@@ -369,16 +394,33 @@ namespace SDF
 
         private class Expression
         {
-            [SDFArgument(Required=true)]
-            public string name
+            private SDF.SDFParsedExpressionList children = null;
+
+            public object CreateExpression(SDFState state, string name, Hashtable arguments)
             {
-                set
+                if (name == GetType().Name)
                 {
+                    object o = new Expression();
+                    ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddObject((string) arguments["name"], o);
+                    return o;
+                }
+                else
+                {
+                    return this;
                 }
             }
 
-            public void Evaluate(SDFState state, Hashtable arguments)
+            public void PostCreateExpression(SDF.SDFParsedExpressionList children)
             {
+                this.children = children;
+            }
+
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
+            {
+                if (name != GetType().Name)
+                {
+                    this.children.Evaluate(state);
+                }
             }
         }
 
@@ -396,11 +438,16 @@ namespace SDF
             this[type.Name] = type;
         }
 
-        public Type this[string index]
+        public void AddObject(string name, object o)
+        {
+            this[name] = o;
+        }
+
+        public object this[string index]
         {
             get
             {
-                return (Type) this.expressions[index];
+                return this.expressions[index];
             }
 
             set
@@ -412,7 +459,7 @@ namespace SDF
         public SDFExpressionRegistry()
         {
             AddType(typeof(LoadExpressions));
-            AddType(typeof(Expression));
+            AddObject(typeof(Expression).Name, new Expression());
         }
     }
 
@@ -645,7 +692,7 @@ namespace SDF
                         SDFParsedExpression expression = (SDFParsedExpression) o;
                         MethodInfo method = expression.Expression.GetType().GetMethod("Evaluate");
 
-                        lastExpressionObject = method.Invoke(expression.Expression, new Object[] { state, expression.Arguments });
+                        lastExpressionObject = method.Invoke(expression.Expression, new Object[] { state, expression.ExpressionName, expression.Arguments });
                     }
                 }
             }
@@ -659,11 +706,17 @@ namespace SDF
         public void Load(SDFParsedExpressionList expressionList, SDFState state)
         {
             SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
+            object newObject = null;
 
             foreach (Object o in expressionList)
             {
                 if (o is SDFParsedExpressionList)
                 {
+                    MethodInfo postCreateMethod = newObject.GetType().GetMethod("PostCreateExpression");
+                    if (postCreateMethod != null)
+                    {
+                        postCreateMethod.Invoke(newObject, new Object[] { o });
+                    }
                     Load((SDFParsedExpressionList) o, state);
                 }
                 else
@@ -671,8 +724,13 @@ namespace SDF
                     SDFParsedExpression expression = (SDFParsedExpression) o;
 
                     {
-                        Type type = expressions[expression.ExpressionName];
-                        object newObject = null;
+                        object foundObject = expressions[expression.ExpressionName];
+                        Type type = foundObject as Type;
+
+                        if ((foundObject != null) && (type == null))
+                        {
+                            type = foundObject.GetType();
+                        }
 
                         if (type == null)
                         {
@@ -684,7 +742,8 @@ namespace SDF
 
                             if (method != null)
                             {
-                                newObject = method.Invoke(null, new Object[] { expression.ExpressionName, expression.Arguments });
+                                newObject = method.Invoke(foundObject, new Object[] { state, expression.ExpressionName, expression.Arguments });
+                                type = newObject.GetType();
                             }
                             else
                             {

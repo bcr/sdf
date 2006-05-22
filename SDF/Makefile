@@ -9,4 +9,4 @@ SDF.Print.dll: SDF.Print.cs
 	mcs -debug -reference:NUnit.Framework -reference:SDF.dll -target:library SDF.Print.cs
 
 test: build
-	mono ../../../OpenSource/NUnit-2.2.0-mono/bin/nunit-console.exe SDF.dll
+	mono --debug ../../../OpenSource/NUnit-2.2.0-mono/bin/nunit-console.exe SDF.dll

@@ -14,7 +14,7 @@ namespace SDF.Print
             }
         }
 
-        public void Evaluate(SDFState state, Hashtable arguments)
+        public void Evaluate(SDFState state, string name, Hashtable arguments)
         {
             Console.WriteLine(arguments["message"]);
         }
@@ -30,7 +30,7 @@ namespace SDF.Print
             }
         }
 
-        public void Evaluate(SDFState state, Hashtable arguments)
+        public void Evaluate(SDFState state, string name, Hashtable arguments)
         {
             Console.WriteLine(((string) arguments["message"]).ToUpper());
         }
