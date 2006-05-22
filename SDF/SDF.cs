@@ -205,6 +205,40 @@ namespace SDF
             this.sdf.Eval(this.state, "Foo");
         }
 
+        private class FixedAnswer
+        {
+            private string isTrueVar = null;
+
+            [SDFArgument(Required=false)]
+            public string isTrue
+            {
+                set { this.isTrueVar = value; }
+                get { return this.isTrueVar; }
+            }
+
+            public object Evaluate(SDFState state, Hashtable arguments)
+            {
+                return isTrueVar;
+            }
+        }
+
+        [Test]
+        public void TestRunContainedExpressions()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FixedAnswer));
+
+            this.sdf.Eval(
+                this.state,
+                "FixedAnswer\n" +
+                "    Print message='Shouldnt get here. And fix the apostrophe.'\n" +
+                "FixedAnswer isTrue='yep'\n" +
+                "    Print message='isTrue is true'\n" +
+                "Print message='Always output'\n"
+                );
+
+            Assert.AreEqual("isTrue is true\nAlways output\n", this.output.ToString());
+        }
+
 /*
         [Test]
         public void TestCustomExpressions()
@@ -594,17 +628,24 @@ namespace SDF
 
             public static void Evaluate(SDFParsedExpressionList expressionList, SDFState state, SDF sdf)
             {
+                Object lastExpressionObject = null;
+
                 foreach (Object o in expressionList)
                 {
                     if (o is SDFParsedExpressionList)
                     {
+                        if (lastExpressionObject != null)
+                        {
+                            lastExpressionObject = null;
+                            Evaluate((SDFParsedExpressionList) o, state, sdf);
+                        }
                     }
                     else
                     {
                         SDFParsedExpression expression = (SDFParsedExpression) o;
                         MethodInfo method = expression.Expression.GetType().GetMethod("Evaluate");
 
-                        method.Invoke(expression.Expression, new Object[] { state, expression.Arguments });
+                        lastExpressionObject = method.Invoke(expression.Expression, new Object[] { state, expression.Arguments });
                     }
                 }
             }
