@@ -6,10 +6,7 @@ namespace SDF.Example.Console
     {
         public static void Main(string[] args)
         {
-            SDF sdf = new SDF();
-            SDFState state = new SDFState();
-
-            sdf.Eval(state, Console.In.ReadToEnd());
+            SDF.Eval(new SDFState(), Console.In.ReadToEnd());
         }
     }
 }
