@@ -18,7 +18,7 @@ namespace SDF.Print
     {
         public void Evaluate(SDFState state, string name, Hashtable arguments)
         {
-            Console.WriteLine(((string) arguments["message"]).ToUpper());
+            Console.WriteLine(arguments["message"].ToString().ToUpper());
         }
     }
 }

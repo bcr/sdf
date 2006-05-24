@@ -130,10 +130,10 @@ namespace SDF
 
         public class FooWithRequiredParam
         {
-            string argumentVar;
+            SDFTokenString argumentVar;
 
             [SDFArgument]
-            public string argument
+            public SDFTokenString argument
             {
                 set
                 {
@@ -231,12 +231,30 @@ namespace SDF
             SDF.Eval(this.state, "Foo");
         }
 
+        public class upper
+        {
+            public string Evaluate(SDFState state, ArrayList arguments)
+            {
+                return arguments[1].ToString().ToUpper();
+            }
+        }
+
+        [Test]
+        public void TestExpressionWithStringToken()
+        {
+            ((SDFTokenStringRegistry) this.state[typeof(SDFTokenStringRegistry)]).AddType(typeof(upper));
+
+            SDF.Eval(this.state, "Print message='$[upper,foo]'");
+
+            Assert.AreEqual("FOO\n", this.output.ToString());
+        }
+
         private class FixedAnswer
         {
-            private string isTrueVar = null;
+            private SDFTokenString isTrueVar = null;
 
             [SDFArgument(Required=false)]
-            public string isTrue
+            public SDFTokenString isTrue
             {
                 set { this.isTrueVar = value; }
                 get { return this.isTrueVar; }
@@ -440,9 +458,11 @@ namespace SDF
 
         public SDFState()
         {
-            // The default state includes an expression registry. This may need to be refactored.
+            // The default state includes an expression registry and a token registry.
+            // This may need to be refactored.
 
             AddState(new SDFExpressionRegistry());
+            AddState(new SDFTokenStringRegistry());
         }
     }
 
@@ -455,7 +475,7 @@ namespace SDF
         {
             public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
             {
-                ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly((string) arguments["filename"]);
+                ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly(arguments["filename"].ToString());
             }
 
             public void Evaluate(SDFState state, string name, Hashtable arguments)
@@ -472,7 +492,7 @@ namespace SDF
                 if (name == GetType().Name)
                 {
                     object o = new Expression();
-                    ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddObject((string) arguments["name"], o);
+                    ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddObject(arguments["name"].ToString(), o);
                     return o;
                 }
                 else
@@ -791,10 +811,29 @@ namespace SDF
             }
         }
 
+        private static void BindArguments(Hashtable arguments, SDFTokenStringRegistry tokenStringRegistry)
+        {
+            Hashtable newArguments = new Hashtable();
+
+            // Not sure if this is stupid or not. I can't modify the collection in place,
+            // so I use a copy and then copy it back.
+
+            foreach (string key in arguments.Keys)
+            {
+                newArguments[key] = SDFTokenString.Parse(tokenStringRegistry, arguments[key].ToString());
+            }
+
+            foreach (string key in newArguments.Keys)
+            {
+                arguments[key] = newArguments[key];
+            }
+        }
+
         public static void Load(SDFParsedExpressionList expressionList, SDFState state)
         {
             SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
             SDFParsedExpression expression = null;
+            SDFTokenStringRegistry tokenStringRegistry = (SDFTokenStringRegistry) state[typeof(SDFTokenStringRegistry)];
 
             foreach (Object o in expressionList)
             {
@@ -812,6 +851,7 @@ namespace SDF
                     }
 
                     expression = (SDFParsedExpression) o;
+                    BindArguments(expression.Arguments, tokenStringRegistry);
 
                     {
                         object newObject = null;

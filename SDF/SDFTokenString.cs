@@ -236,7 +236,7 @@ namespace SDF
             this.arguments.Add(o);
         }
 
-        public static string Eval(SDFTokenStringRegistry registry, SDFState state, string eval)
+        public static SDFTokenString Parse(SDFTokenStringRegistry registry, string eval)
         {
             SDFTokenString newString = new SDFTokenString();
             int offset = 0;
@@ -260,7 +260,12 @@ namespace SDF
                 }
             }
 
-            return newString.ToString(state);
+            return newString;
+        }
+
+        public static string Eval(SDFTokenStringRegistry registry, SDFState state, string eval)
+        {
+            return Parse(registry, eval).ToString(state);
         }
 
         public string ToString(SDFState state)
