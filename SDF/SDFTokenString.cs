@@ -66,6 +66,24 @@ namespace SDF
         {
             SDFTokenString.Eval(registry, state, "$[foo]");
         }
+
+        public class stringfromstate
+        {
+            public string Evaluate(SDFState state, ArrayList arguments)
+            {
+                return (string) state[typeof(string)];
+            }
+        }
+
+        [Test]
+        public void TestStateAccess()
+        {
+            registry.AddType(typeof(stringfromstate));
+
+            this.state += "stringydingy";
+
+            Assert.AreEqual("stringydingy", SDFTokenString.Eval(registry, state, "$[stringfromstate]"));
+        }
     }
 
     public class SDFTokenStringRegistry
@@ -261,7 +279,14 @@ namespace SDF
             {
                 foreach (object o in this.elements)
                 {
-                    returnString.Append(o.ToString());
+                    if (o is SDFTokenString)
+                    {
+                        returnString.Append(((SDFTokenString) o).ToString(state));
+                    }
+                    else
+                    {
+                        returnString.Append(o.ToString());
+                    }
                 }
             }
 
