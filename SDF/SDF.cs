@@ -359,6 +359,19 @@ namespace SDF
             Assert.AreEqual(typeof(void), typeof(ReturnValuesClass).GetMethod("Evaluate").ReturnType);
             Assert.AreEqual(typeof(string), typeof(ReturnValuesClass).GetMethod("ReturnEvaluate").ReturnType);
         }
+
+        [Test]
+        public void TestCustomToken()
+        {
+            SDF.Eval(
+                this.state,
+                "Token name='test'\n" +
+                "    SetTokenResult result='Hello from test'\n" +
+                "Print message='I do say $[test]'\n"
+                );
+
+            Assert.AreEqual("I do say Hello from test\n", this.output.ToString());
+        }
     }
 
     public class SDFArgument : Attribute
@@ -523,6 +536,99 @@ namespace SDF
             }
         }
 
+        [SDFArgument(Name="name")]
+        private class TokenExpression
+        {
+            private SDF.SDFParsedExpressionList rootExpressionChildren = null;
+            TokenClass token;
+
+            public TokenClass Token
+            {
+                get { return token; }
+            }
+
+            public TokenExpression()
+            {
+                this.token = new TokenClass(this);
+            }
+
+            private class TokenResult
+            {
+                private string result;
+
+                public string Result
+                {
+                    set { this.result = value; }
+                    get { return this.result; }
+                }
+            }
+
+            [SDFArgument(Name="result")]
+            private class SetTokenResult
+            {
+                // TODO: Required state is evaluated at load time, so the Token expression
+                //       needs to indicate that it produces the TokenResult state
+//                [SDFStateRequired(typeof(TokenResult))]
+                public void Evaluate(SDFState state, string name, Hashtable arguments)
+                {
+                    ((TokenResult) state[typeof(TokenResult)]).Result = arguments["result"].ToString();
+                }
+            }
+
+            private class TokenClass
+            {
+                private TokenExpression parent;
+
+                public TokenClass(TokenExpression parent)
+                {
+                    this.parent = parent;
+                }
+
+                public object CreateToken()
+                {
+                    return this;
+                }
+
+                public string Evaluate(SDFState state, ArrayList arguments)
+                {
+                    TokenResult result = new TokenResult();
+
+                    state += result;
+                    parent.EvaluateChildExpressions(state);
+                    // TODO: Remove the result from the state!
+                    return result.Result;
+                }
+
+            }
+
+            public void Evaluate(SDFState state, string name, Hashtable arguments)
+            {
+            }
+
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
+            {
+                this.rootExpressionChildren = children;
+            }
+
+            private void EvaluateChildExpressions(SDFState state)
+            {
+                this.rootExpressionChildren.Evaluate(state);
+            }
+
+            public static object CreateExpression(SDFState state, string name, Hashtable arguments)
+            {
+                TokenExpression o = new TokenExpression();
+                ((SDFTokenStringRegistry) state[typeof(SDFTokenStringRegistry)]).AddObject(arguments["name"].ToString(), o.Token);
+                return o;
+            }
+
+            public static void Register(SDFExpressionRegistry registry)
+            {
+                registry.AddType("Token", typeof(TokenExpression));
+                registry.AddType("SetTokenResult", typeof(SetTokenResult));
+            }
+        }
+        
         public void AddAssembly(string assemblyFilename)
         {
             Assembly assembly = Assembly.LoadFrom(assemblyFilename);
@@ -530,6 +636,11 @@ namespace SDF
             {
                 AddType(type);
             }
+        }
+
+        public void AddType(string name, Type type)
+        {
+            this[name] = type;
         }
 
         public void AddType(Type type)
@@ -559,6 +670,7 @@ namespace SDF
         {
             AddType(typeof(LoadExpressions));
             Expression.Register(this);
+            TokenExpression.Register(this);
         }
     }
 

@@ -124,14 +124,22 @@ namespace SDF
 
         public object NewObject(string name)
         {
-            Type type = (Type) this[name];
+            object foundObject = this[name];
+            Type type = foundObject as Type;
 
-            if (type == null)
+            if (foundObject == null)
             {
                 throw new SDFException(String.Format("Unknown token '{0}'", name));
             }
 
-            return type.GetConstructor(new Type[0]).Invoke(null);
+            if (type != null)
+            {
+                return type.GetConstructor(new Type[0]).Invoke(null);
+            }
+            else
+            {
+                return foundObject.GetType().GetMethod("CreateToken").Invoke(foundObject, null);
+            }
         }
 
         public SDFTokenStringRegistry()
