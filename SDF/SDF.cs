@@ -224,6 +224,31 @@ namespace SDF
             Assert.AreEqual("I am FooWithRequiredState hear me roar\n", this.output.ToString());
         }
 
+        [SDFArgument(Name="string")]
+        [SDFStateProvided(typeof(string))]
+        private class StringState
+        {
+            public object Evaluate(SDFState state, string name, Hashtable arguments)
+            {
+                return arguments["string"].ToString();
+            }
+        }
+
+        [Test]
+        public void TestExpressionRequiredStateProvidedByParent()
+        {
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(StringState));
+            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
+
+            SDF.Eval(
+                this.state,
+                "StringState string='hear me roar'\n" +
+                "    FooWithRequiredState\n"
+                );
+
+            Assert.AreEqual("I am FooWithRequiredState hear me roar\n", this.output.ToString());
+        }
+
         [Test]
         [ExpectedException(typeof(SDFException), "Unknown expression 'Foo'")]
         public void TestExpressionNotFound()
@@ -429,6 +454,29 @@ namespace SDF
         }
     }
 
+    public class SDFStateProvided : Attribute
+    {
+        private Type typeVar;
+
+        public Type ProvidedType
+        {
+            get
+            {
+                return this.typeVar;
+            }
+
+            set
+            {
+                this.typeVar = value;
+            }
+        }
+
+        public SDFStateProvided(Type type)
+        {
+            ProvidedType = type;
+        }
+    }
+
     public class SDFException : ApplicationException
     {
         public SDFException(string reason) : base(reason)
@@ -466,6 +514,17 @@ namespace SDF
         public static SDFState operator+(SDFState state, Object o)
         {
             state.AddState(o);
+            return state;
+        }
+
+        public void RemoveState(object o)
+        {
+            this.state.Remove(o);
+        }
+
+        public static SDFState operator-(SDFState state, Object o)
+        {
+            state.RemoveState(o);
             return state;
         }
 
@@ -537,6 +596,7 @@ namespace SDF
         }
 
         [SDFArgument(Name="name")]
+        [SDFStateProvided(typeof(TokenResult))]
         private class TokenExpression
         {
             private SDF.SDFParsedExpressionList rootExpressionChildren = null;
@@ -566,9 +626,7 @@ namespace SDF
             [SDFArgument(Name="result")]
             private class SetTokenResult
             {
-                // TODO: Required state is evaluated at load time, so the Token expression
-                //       needs to indicate that it produces the TokenResult state
-//                [SDFStateRequired(typeof(TokenResult))]
+                [SDFStateRequired(typeof(TokenResult))]
                 public void Evaluate(SDFState state, string name, Hashtable arguments)
                 {
                     ((TokenResult) state[typeof(TokenResult)]).Result = arguments["result"].ToString();
@@ -594,8 +652,14 @@ namespace SDF
                     TokenResult result = new TokenResult();
 
                     state += result;
-                    parent.EvaluateChildExpressions(state);
-                    // TODO: Remove the result from the state!
+                    try
+                    {
+                        parent.EvaluateChildExpressions(state);
+                    }
+                    finally
+                    {
+                        state -= result;
+                    }
                     return result.Result;
                 }
 
@@ -894,8 +958,16 @@ namespace SDF
                     {
                         if (lastExpressionObject != null)
                         {
+                            state += lastExpressionObject;
+                            try
+                            {
+                                Evaluate((SDFParsedExpressionList) o, state);
+                            }
+                            finally
+                            {
+                                state -= lastExpressionObject;
+                            }
                             lastExpressionObject = null;
-                            Evaluate((SDFParsedExpressionList) o, state);
                         }
                     }
                     else
@@ -941,7 +1013,34 @@ namespace SDF
             }
         }
 
-        public static void Load(SDFParsedExpressionList expressionList, SDFState state)
+        public class ProvidedStatePile
+        {
+            private ArrayList providedState = new ArrayList();
+            private Stack indexStack = new Stack();
+
+            public void AddProvidedStateFromObject(Object o)
+            {
+                this.indexStack.Push(providedState.Count);
+                foreach (SDFStateProvided stateProvided in o.GetType().GetCustomAttributes(typeof(SDFStateProvided), false))
+                {
+                    this.providedState.Add(stateProvided.ProvidedType);
+                }
+            }
+
+            public void RemoveLastProvidedState()
+            {
+                int index = (int) this.indexStack.Pop();
+
+                this.providedState.RemoveRange(index, providedState.Count - index);
+            }
+
+            public bool Contains(Type type)
+            {
+                return (providedState.Contains(type));
+            }
+        }
+
+        public static void Load(SDFParsedExpressionList expressionList, SDFState state, ProvidedStatePile parentExpressionStatePile)
         {
             SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
             SDFParsedExpression expression = null;
@@ -952,8 +1051,10 @@ namespace SDF
                 if (o is SDFParsedExpressionList)
                 {
                     MaybeCallPostCreateExpression(state, expression, (SDFParsedExpressionList) o);
+                    parentExpressionStatePile.AddProvidedStateFromObject(expression.Expression);
                     expression = null;
-                    Load((SDFParsedExpressionList) o, state);
+                    Load((SDFParsedExpressionList) o, state, parentExpressionStatePile);
+                    parentExpressionStatePile.RemoveLastProvidedState();
                 }
                 else
                 {
@@ -1039,7 +1140,7 @@ namespace SDF
 
                             foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
                             {
-                                if (state[stateRequired.RequiredType] == null)
+                                if ((state[stateRequired.RequiredType] == null) && (!parentExpressionStatePile.Contains(stateRequired.RequiredType)))
                                 {
                                     throw new SDFException(String.Format("Required state '{0}' was not found", stateRequired.RequiredType.Name));
                                 }
@@ -1061,7 +1162,7 @@ namespace SDF
         public static void Eval(SDFState state, string eval)
         {
             SDFParsedExpressionList expressionList = SDFExpressionParser.Parse(eval);
-            Load(expressionList, state);
+            Load(expressionList, state, new ProvidedStatePile());
             expressionList.Evaluate(state);
         }
     }
