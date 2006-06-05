@@ -692,7 +692,7 @@ namespace SDF
                 registry.AddType("SetTokenResult", typeof(SetTokenResult));
             }
         }
-        
+
         public void AddAssembly(string assemblyFilename)
         {
             Assembly assembly = Assembly.LoadFrom(assemblyFilename);
