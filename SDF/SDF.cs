@@ -595,6 +595,17 @@ namespace SDF
             }
         }
 
+        private class TokenResult
+        {
+            private string result;
+
+            public string Result
+            {
+                set { this.result = value; }
+                get { return this.result; }
+            }
+        }
+
         [SDFArgument(Name="name")]
         [SDFStateProvided(typeof(TokenResult))]
         private class TokenExpression
@@ -610,17 +621,6 @@ namespace SDF
             public TokenExpression()
             {
                 this.token = new TokenClass(this);
-            }
-
-            private class TokenResult
-            {
-                private string result;
-
-                public string Result
-                {
-                    set { this.result = value; }
-                    get { return this.result; }
-                }
             }
 
             [SDFArgument(Name="result")]

@@ -12,4 +12,4 @@ SDF.Example.Console.exe: SDF.Example.Console.cs SDF.dll
 	mcs -debug -reference:NUnit.Framework -reference:SDF.dll -target:exe SDF.Example.Console.cs
 
 test: build
-	mono --debug ../../../OpenSource/NUnit-2.2.0-mono/bin/nunit-console.exe SDF.dll
+	mono --debug /Library/Frameworks/Mono.framework/Versions/1.2/lib/mono/1.0/nunit-console.exe SDF.dll
