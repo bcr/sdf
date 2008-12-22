@@ -35,4 +35,10 @@
     <Compile Include="SDF.Print.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\SDF\SDF.csproj">
+      <Project>{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}</Project>
+      <Name>SDF</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>
