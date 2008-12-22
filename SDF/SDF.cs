@@ -633,7 +633,7 @@ namespace SDF
                 }
             }
 
-            private class TokenClass
+            public class TokenClass
             {
                 private TokenExpression parent;
 
