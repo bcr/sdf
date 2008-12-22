@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF", "SDF\SDF.csproj", "{15F9C8DB-B690-451A-BC5E-877A644FA813}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF.Print", "SDF.Print\SDF.Print.csproj", "{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15F9C8DB-B690-451A-BC5E-877A644FA813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15F9C8DB-B690-451A-BC5E-877A644FA813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15F9C8DB-B690-451A-BC5E-877A644FA813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15F9C8DB-B690-451A-BC5E-877A644FA813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		name = SDF
+		version = 0.1
+		StartupItem = SDF\SDF.csproj
+	EndGlobalSection
+EndGlobal
