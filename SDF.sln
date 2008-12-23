@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF", "SDF\SDF.csproj", "{1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF.Print", "SDF.Print\SDF.Print.csproj", "{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF.Example.Console", "SDF.Example.Console\SDF.Example.Console.csproj", "{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D4A1819-3139-4A7F-BB52-74C55A8CBA93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		name = SDF
