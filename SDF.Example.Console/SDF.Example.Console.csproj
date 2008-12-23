@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9A81E4B1-D73C-48E4-835A-B93177ECA5DC}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AssemblyName>SDF.Example</AssemblyName>
+    <AssemblyName>SDF.Example.Console</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
