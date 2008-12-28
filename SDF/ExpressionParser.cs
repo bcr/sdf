@@ -118,10 +118,5 @@ namespace SDF
 
             return rootList;
         }
-
-        public IEnumerator GetEnumerator()
-        {
-            return null;
-        }
     }
 }
