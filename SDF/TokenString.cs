@@ -40,7 +40,7 @@ namespace SDF
         {
             registry.AddType(typeof(upper));
 
-            Assert.AreEqual("FOO", SDFTokenString.Eval(registry, state, "$[upper,foo]"));
+            Assert.AreEqual("FOO", TokenString.Eval(registry, state, "$[upper,foo]"));
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace SDF
         {
             registry.AddType(typeof(upper));
 
-            Assert.AreEqual("yap yap, ]yap FOO meow meow, ]meow", SDFTokenString.Eval(registry, state, "yap yap, ]yap $[upper,foo] meow meow, ]meow"));
+            Assert.AreEqual("yap yap, ]yap FOO meow meow, ]meow", TokenString.Eval(registry, state, "yap yap, ]yap $[upper,foo] meow meow, ]meow"));
         }
 
         [Test]
@@ -57,14 +57,14 @@ namespace SDF
             registry.AddType(typeof(upper));
             registry.AddType(typeof(dog));
 
-            Assert.AreEqual("DOGDUDE", SDFTokenString.Eval(registry, state, "$[upper,$[dog]]"));
+            Assert.AreEqual("DOGDUDE", TokenString.Eval(registry, state, "$[upper,$[dog]]"));
         }
 
         [Test]
         [ExpectedException(typeof(SDFException), @"Unknown token 'foo'")]
         public void TestUnknownToken()
         {
-            SDFTokenString.Eval(registry, state, "$[foo]");
+            TokenString.Eval(registry, state, "$[foo]");
         }
 
         public class stringfromstate
@@ -82,11 +82,11 @@ namespace SDF
 
             this.state += "stringydingy";
 
-            Assert.AreEqual("stringydingy", SDFTokenString.Eval(registry, state, "$[stringfromstate]"));
+            Assert.AreEqual("stringydingy", TokenString.Eval(registry, state, "$[stringfromstate]"));
         }
     }
 
-    public class SDFTokenString
+    public class TokenString
     {
         private ArrayList elements = new ArrayList();
         private ArrayList arguments = new ArrayList();
@@ -113,9 +113,9 @@ namespace SDF
             }
         }
 
-        private static int ParseTokenString(TokenStringRegistry registry, int offset, string eval, SDFTokenString returnString)
+        private static int ParseTokenString(TokenStringRegistry registry, int offset, string eval, TokenString returnString)
         {
-            SDFTokenString currentString = new SDFTokenString();
+            TokenString currentString = new TokenString();
 
             // Eat the TOKEN_START
 
@@ -143,7 +143,7 @@ namespace SDF
                 {
                     // If it's TOKEN_START, add this run to the current string, and call recursively
 
-                    SDFTokenString newString = new SDFTokenString();
+                    TokenString newString = new TokenString();
 
                     currentString.Add(eval.Substring(offset, tokenStartOffset - offset));
 
@@ -156,7 +156,7 @@ namespace SDF
 
                     currentString.Add(eval.Substring(offset, commaOffset - offset));
                     returnString.AddArgument(currentString);
-                    currentString = new SDFTokenString();
+                    currentString = new TokenString();
                     offset = commaOffset + 1;
                 }
                 else
@@ -183,9 +183,9 @@ namespace SDF
             this.arguments.Add(o);
         }
 
-        public static SDFTokenString Parse(TokenStringRegistry registry, string eval)
+        public static TokenString Parse(TokenStringRegistry registry, string eval)
         {
-            SDFTokenString newString = new SDFTokenString();
+            TokenString newString = new TokenString();
             int offset = 0;
 
             while (offset < eval.Length)
@@ -199,7 +199,7 @@ namespace SDF
                 }
                 else
                 {
-                    SDFTokenString innerNewString = new SDFTokenString();
+                    TokenString innerNewString = new TokenString();
 
                     newString.Add(eval.Substring(offset, tokenStartOffset - offset));
                     offset = ParseTokenString(registry, tokenStartOffset, eval, innerNewString);
@@ -231,9 +231,9 @@ namespace SDF
             {
                 foreach (object o in this.elements)
                 {
-                    if (o is SDFTokenString)
+                    if (o is TokenString)
                     {
-                        returnString.Append(((SDFTokenString) o).ToString(state));
+                        returnString.Append(((TokenString) o).ToString(state));
                     }
                     else
                     {

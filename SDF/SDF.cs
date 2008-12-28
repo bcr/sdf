@@ -129,10 +129,10 @@ namespace SDF
 
         public class FooWithRequiredParam
         {
-            SDFTokenString argumentVar;
+            TokenString argumentVar;
 
             [SDFArgument]
-            public SDFTokenString argument
+            public TokenString argument
             {
                 set
                 {
@@ -275,10 +275,10 @@ namespace SDF
 
         private class FixedAnswer
         {
-            private SDFTokenString isTrueVar = null;
+            private TokenString isTrueVar = null;
 
             [SDFArgument(Required=false)]
-            public SDFTokenString isTrue
+            public TokenString isTrue
             {
                 set { this.isTrueVar = value; }
                 get { return this.isTrueVar; }
@@ -561,7 +561,7 @@ namespace SDF
 
             foreach (string key in arguments.Keys)
             {
-                newArguments[key] = SDFTokenString.Parse(tokenStringRegistry, arguments[key].ToString());
+                newArguments[key] = TokenString.Parse(tokenStringRegistry, arguments[key].ToString());
             }
 
             foreach (string key in newArguments.Keys)

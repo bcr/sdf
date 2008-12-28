@@ -34,7 +34,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="SDF.cs" />
-    <Compile Include="SDFTokenString.cs" />
+    <Compile Include="TokenString.cs" />
     <Compile Include="ExpressionRegistry.cs" />
     <Compile Include="TokenStringRegistry.cs" />
     <Compile Include="SDFExpressionParser.cs" />
