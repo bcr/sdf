@@ -17,7 +17,7 @@ namespace SDF
         [SDFArgument(Name="filename")]
         private class LoadExpressions
         {
-            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDFParsedExpressionList children)
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, ParsedExpressionList children)
             {
                 ((ExpressionRegistry) state[typeof(ExpressionRegistry)]).AddAssembly(arguments["filename"].ToString());
             }
@@ -29,7 +29,7 @@ namespace SDF
 
         private class Expression
         {
-            private SDFParsedExpressionList rootExpressionChildren = null;
+            private ParsedExpressionList rootExpressionChildren = null;
 
             public object CreateExpression(SDFState state, string name, Hashtable arguments)
             {
@@ -45,7 +45,7 @@ namespace SDF
                 }
             }
 
-            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDFParsedExpressionList children)
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, ParsedExpressionList children)
             {
                 if (name == GetType().Name)
                 {
@@ -82,7 +82,7 @@ namespace SDF
         [SDFStateProvided(typeof(TokenResult))]
         private class TokenExpression
         {
-            private SDFParsedExpressionList rootExpressionChildren = null;
+            private ParsedExpressionList rootExpressionChildren = null;
             TokenClass token;
 
             public TokenClass Token
@@ -141,7 +141,7 @@ namespace SDF
             {
             }
 
-            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDFParsedExpressionList children)
+            public void PostCreateExpression(SDFState state, string name, Hashtable arguments, ParsedExpressionList children)
             {
                 this.rootExpressionChildren = children;
             }

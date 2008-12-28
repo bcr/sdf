@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace SDF
 {
-    public class SDFParsedExpressionList : IEnumerable
+    public class ParsedExpressionList : IEnumerable
     {
         private ArrayList expressionList = new ArrayList();
 
@@ -18,28 +18,28 @@ namespace SDF
         {
             get
             {
-                return ((SDFParsedExpression) expressionList[0]).IndentLevel;
+                return ((ParsedExpression) expressionList[0]).IndentLevel;
             }
         }
 
-        public static SDFParsedExpressionList operator+(SDFParsedExpressionList list, SDFParsedExpression parsedExpression)
+        public static ParsedExpressionList operator+(ParsedExpressionList list, ParsedExpression parsedExpression)
         {
             list.AddExpression(parsedExpression);
             return list;
         }
 
-        public static SDFParsedExpressionList operator+(SDFParsedExpressionList list, SDFParsedExpressionList parsedExpressionList)
+        public static ParsedExpressionList operator+(ParsedExpressionList list, ParsedExpressionList parsedExpressionList)
         {
             list.AddExpressionList(parsedExpressionList);
             return list;
         }
 
-        public void AddExpression(SDFParsedExpression parsedExpression)
+        public void AddExpression(ParsedExpression parsedExpression)
         {
             this.expressionList.Add(parsedExpression);
         }
 
-        public void AddExpressionList(SDFParsedExpressionList parsedExpressionList)
+        public void AddExpressionList(ParsedExpressionList parsedExpressionList)
         {
             this.expressionList.Add(parsedExpressionList);
         }
@@ -49,20 +49,20 @@ namespace SDF
             return this.expressionList.GetEnumerator();
         }
 
-        public static void Evaluate(SDFParsedExpressionList expressionList, SDFState state)
+        public static void Evaluate(ParsedExpressionList expressionList, SDFState state)
         {
             Object lastExpressionObject = null;
 
             foreach (Object o in expressionList)
             {
-                if (o is SDFParsedExpressionList)
+                if (o is ParsedExpressionList)
                 {
                     if (lastExpressionObject != null)
                     {
                         state += lastExpressionObject;
                         try
                         {
-                            Evaluate((SDFParsedExpressionList) o, state);
+                            Evaluate((ParsedExpressionList) o, state);
                         }
                         finally
                         {
@@ -73,7 +73,7 @@ namespace SDF
                 }
                 else
                 {
-                    SDFParsedExpression expression = (SDFParsedExpression) o;
+                    ParsedExpression expression = (ParsedExpression) o;
                     MethodInfo method = expression.Expression.GetType().GetMethod("Evaluate");
 
                     lastExpressionObject = method.Invoke(expression.Expression, new Object[] { state, expression.ExpressionName, expression.Arguments });

@@ -37,9 +37,9 @@
     <Compile Include="TokenString.cs" />
     <Compile Include="ExpressionRegistry.cs" />
     <Compile Include="TokenStringRegistry.cs" />
-    <Compile Include="SDFExpressionParser.cs" />
-    <Compile Include="SDFParsedExpression.cs" />
-    <Compile Include="SDFParsedExpressionList.cs" />
+    <Compile Include="ExpressionParser.cs" />
+    <Compile Include="ParsedExpression.cs" />
+    <Compile Include="ParsedExpressionList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -9,7 +9,7 @@ using System.Collections;
 
 namespace SDF
 {
-    public class SDFParsedExpression
+    public class ParsedExpression
     {
         private string expressionNameVar = null;
         private Hashtable argumentsVar = null;
@@ -53,7 +53,7 @@ namespace SDF
             }
         }
 
-        public SDFParsedExpression(string expressionName, Hashtable arguments, int indentLevel)
+        public ParsedExpression(string expressionName, Hashtable arguments, int indentLevel)
         {
             this.expressionNameVar = expressionName;
             this.argumentsVar = arguments;

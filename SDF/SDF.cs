@@ -543,7 +543,7 @@ namespace SDF
         {
         }
 
-        private static void MaybeCallPostCreateExpression(SDFState state, SDFParsedExpression expression, SDFParsedExpressionList children)
+        private static void MaybeCallPostCreateExpression(SDFState state, ParsedExpression expression, ParsedExpressionList children)
         {
             MethodInfo postCreateMethod = expression.Expression.GetType().GetMethod("PostCreateExpression");
             if (postCreateMethod != null)
@@ -597,20 +597,20 @@ namespace SDF
             }
         }
 
-        public static void Load(SDFParsedExpressionList expressionList, SDFState state, ProvidedStatePile parentExpressionStatePile)
+        public static void Load(ParsedExpressionList expressionList, SDFState state, ProvidedStatePile parentExpressionStatePile)
         {
             ExpressionRegistry expressions = (ExpressionRegistry) state[typeof(ExpressionRegistry)];
-            SDFParsedExpression expression = null;
+            ParsedExpression expression = null;
             TokenStringRegistry tokenStringRegistry = (TokenStringRegistry) state[typeof(TokenStringRegistry)];
 
             foreach (Object o in expressionList)
             {
-                if (o is SDFParsedExpressionList)
+                if (o is ParsedExpressionList)
                 {
-                    MaybeCallPostCreateExpression(state, expression, (SDFParsedExpressionList) o);
+                    MaybeCallPostCreateExpression(state, expression, (ParsedExpressionList) o);
                     parentExpressionStatePile.AddProvidedStateFromObject(expression.Expression);
                     expression = null;
-                    Load((SDFParsedExpressionList) o, state, parentExpressionStatePile);
+                    Load((ParsedExpressionList) o, state, parentExpressionStatePile);
                     parentExpressionStatePile.RemoveLastProvidedState();
                 }
                 else
@@ -620,7 +620,7 @@ namespace SDF
                         MaybeCallPostCreateExpression(state, expression, null);
                     }
 
-                    expression = (SDFParsedExpression) o;
+                    expression = (ParsedExpression) o;
                     BindArguments(expression.Arguments, tokenStringRegistry);
 
                     {
@@ -718,7 +718,7 @@ namespace SDF
 
         public static void Eval(SDFState state, string eval)
         {
-            SDFParsedExpressionList expressionList = SDFExpressionParser.Parse(eval);
+            ParsedExpressionList expressionList = ExpressionParser.Parse(eval);
             Load(expressionList, state, new ProvidedStatePile());
             expressionList.Evaluate(state);
         }
