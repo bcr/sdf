@@ -40,6 +40,11 @@
     <Compile Include="ExpressionParser.cs" />
     <Compile Include="ParsedExpression.cs" />
     <Compile Include="ParsedExpressionList.cs" />
+    <Compile Include="SDFArgument.cs" />
+    <Compile Include="SDFException.cs" />
+    <Compile Include="SDFState.cs" />
+    <Compile Include="SDFStateProvided.cs" />
+    <Compile Include="SDFStateRequired.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
