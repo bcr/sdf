@@ -35,6 +35,8 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="SDF.cs" />
     <Compile Include="SDFTokenString.cs" />
+    <Compile Include="ExpressionRegistry.cs" />
+    <Compile Include="TokenStringRegistry.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
