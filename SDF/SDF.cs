@@ -89,7 +89,7 @@ namespace SDF
         [Test]
         public void TestTwoExpressionsNoParameters()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(Foo));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(Foo));
 
             SDF.Eval(
                 state,
@@ -123,7 +123,7 @@ namespace SDF
         [Test]
         public void TestFooAsFactory()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooAsFactory));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooAsFactory));
 
             SDF.Eval(state, "FooAsFactory");
         }
@@ -151,7 +151,7 @@ namespace SDF
         [ExpectedException(typeof(SDFException), @"Rquired argument 'argument' was not specified")]
         public void TestExpressionRequiredParamMissing()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
 
             SDF.Eval(this.state, "FooWithRequiredParam");
         }
@@ -159,7 +159,7 @@ namespace SDF
         [Test]
         public void TestExpressionRequiredParamPresent()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
 
             SDF.Eval(this.state, "FooWithRequiredParam argument='hear me roar'");
 
@@ -179,7 +179,7 @@ namespace SDF
         [ExpectedException(typeof(SDFException), @"Rquired argument 'argument' was not specified")]
         public void TestExpressionRequiredParamClassLevelMissing()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
 
             SDF.Eval(this.state, "FooWithRequiredParamClassLevel");
         }
@@ -187,7 +187,7 @@ namespace SDF
         [Test]
         public void TestExpressionRequiredParamClassLevelPresent()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
 
             SDF.Eval(this.state, "FooWithRequiredParamClassLevel argument='hear me roar'");
 
@@ -207,7 +207,7 @@ namespace SDF
         [ExpectedException(typeof(SDFException), "Required state 'String' was not found")]
         public void TestExpressionRequiredStateMissing()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
 
             SDF.Eval(this.state, "FooWithRequiredState");
         }
@@ -217,7 +217,7 @@ namespace SDF
         {
             this.state += "hear me roar";
 
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
 
             SDF.Eval(this.state, "FooWithRequiredState");
 
@@ -237,8 +237,8 @@ namespace SDF
         [Test]
         public void TestExpressionRequiredStateProvidedByParent()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(StringState));
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(StringState));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
 
             SDF.Eval(
                 this.state,
@@ -267,7 +267,7 @@ namespace SDF
         [Test]
         public void TestExpressionWithStringToken()
         {
-            ((SDFTokenStringRegistry) this.state[typeof(SDFTokenStringRegistry)]).AddType(typeof(upper));
+            ((TokenStringRegistry) this.state[typeof(TokenStringRegistry)]).AddType(typeof(upper));
 
             SDF.Eval(this.state, "Print message='$[upper,foo]'");
 
@@ -294,7 +294,7 @@ namespace SDF
         [Test]
         public void TestRunContainedExpressions()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddType(typeof(FixedAnswer));
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FixedAnswer));
 
             SDF.Eval(
                 this.state,
@@ -327,7 +327,7 @@ namespace SDF
         [Test]
         public void TestObjectBasedFactory()
         {
-            ((SDFExpressionRegistry) this.state[typeof(SDFExpressionRegistry)]).AddObject("ObjectBasedFactoryDude", new ObjectBasedFactory());
+            ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddObject("ObjectBasedFactoryDude", new ObjectBasedFactory());
 
             SDF.Eval(this.state, "ObjectBasedFactoryDude message='yap'\n");
 
@@ -533,12 +533,12 @@ namespace SDF
             // The default state includes an expression registry and a token registry.
             // This may need to be refactored.
 
-            AddState(new SDFExpressionRegistry());
-            AddState(new SDFTokenStringRegistry());
+            AddState(new ExpressionRegistry());
+            AddState(new TokenStringRegistry());
         }
     }
 
-    public class SDFExpressionRegistry
+    public class ExpressionRegistry
     {
         private Hashtable expressions = new Hashtable();
 
@@ -547,7 +547,7 @@ namespace SDF
         {
             public void PostCreateExpression(SDFState state, string name, Hashtable arguments, SDF.SDFParsedExpressionList children)
             {
-                ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddAssembly(arguments["filename"].ToString());
+                ((ExpressionRegistry) state[typeof(ExpressionRegistry)]).AddAssembly(arguments["filename"].ToString());
             }
 
             public void Evaluate(SDFState state, string name, Hashtable arguments)
@@ -564,7 +564,7 @@ namespace SDF
                 if (name == GetType().Name)
                 {
                     object o = new Expression();
-                    ((SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)]).AddObject(arguments["name"].ToString(), o);
+                    ((ExpressionRegistry) state[typeof(ExpressionRegistry)]).AddObject(arguments["name"].ToString(), o);
                     return o;
                 }
                 else
@@ -589,7 +589,7 @@ namespace SDF
                 }
             }
 
-            public static void Register(SDFExpressionRegistry registry)
+            public static void Register(ExpressionRegistry registry)
             {
                 registry.AddObject(typeof(Expression).Name, new Expression());
             }
@@ -682,11 +682,11 @@ namespace SDF
             public static object CreateExpression(SDFState state, string name, Hashtable arguments)
             {
                 TokenExpression o = new TokenExpression();
-                ((SDFTokenStringRegistry) state[typeof(SDFTokenStringRegistry)]).AddObject(arguments["name"].ToString(), o.Token);
+                ((TokenStringRegistry) state[typeof(TokenStringRegistry)]).AddObject(arguments["name"].ToString(), o.Token);
                 return o;
             }
 
-            public static void Register(SDFExpressionRegistry registry)
+            public static void Register(ExpressionRegistry registry)
             {
                 registry.AddType("Token", typeof(TokenExpression));
                 registry.AddType("SetTokenResult", typeof(SetTokenResult));
@@ -730,7 +730,7 @@ namespace SDF
             }
         }
 
-        public SDFExpressionRegistry()
+        public ExpressionRegistry()
         {
             AddType(typeof(LoadExpressions));
             Expression.Register(this);
@@ -995,7 +995,7 @@ namespace SDF
             }
         }
 
-        private static void BindArguments(Hashtable arguments, SDFTokenStringRegistry tokenStringRegistry)
+        private static void BindArguments(Hashtable arguments, TokenStringRegistry tokenStringRegistry)
         {
             Hashtable newArguments = new Hashtable();
 
@@ -1042,9 +1042,9 @@ namespace SDF
 
         public static void Load(SDFParsedExpressionList expressionList, SDFState state, ProvidedStatePile parentExpressionStatePile)
         {
-            SDFExpressionRegistry expressions = (SDFExpressionRegistry) state[typeof(SDFExpressionRegistry)];
+            ExpressionRegistry expressions = (ExpressionRegistry) state[typeof(ExpressionRegistry)];
             SDFParsedExpression expression = null;
-            SDFTokenStringRegistry tokenStringRegistry = (SDFTokenStringRegistry) state[typeof(SDFTokenStringRegistry)];
+            TokenStringRegistry tokenStringRegistry = (TokenStringRegistry) state[typeof(TokenStringRegistry)];
 
             foreach (Object o in expressionList)
             {

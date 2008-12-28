@@ -9,13 +9,13 @@ namespace SDF
     [TestFixture]
     public class TestSDFTokenString
     {
-        private SDFTokenStringRegistry registry = null;
+        private TokenStringRegistry registry = null;
         private SDFState state = null;
 
         [SetUp]
         public void SetUp()
         {
-            this.registry = new SDFTokenStringRegistry();
+            this.registry = new TokenStringRegistry();
             this.state = new SDFState();
         }
 
@@ -86,7 +86,7 @@ namespace SDF
         }
     }
 
-    public class SDFTokenStringRegistry
+    public class TokenStringRegistry
     {
         private Hashtable tokens = new Hashtable();
 
@@ -142,7 +142,7 @@ namespace SDF
             }
         }
 
-        public SDFTokenStringRegistry()
+        public TokenStringRegistry()
         {
         }
     }
@@ -174,7 +174,7 @@ namespace SDF
             }
         }
 
-        private static int ParseTokenString(SDFTokenStringRegistry registry, int offset, string eval, SDFTokenString returnString)
+        private static int ParseTokenString(TokenStringRegistry registry, int offset, string eval, SDFTokenString returnString)
         {
             SDFTokenString currentString = new SDFTokenString();
 
@@ -244,7 +244,7 @@ namespace SDF
             this.arguments.Add(o);
         }
 
-        public static SDFTokenString Parse(SDFTokenStringRegistry registry, string eval)
+        public static SDFTokenString Parse(TokenStringRegistry registry, string eval)
         {
             SDFTokenString newString = new SDFTokenString();
             int offset = 0;
@@ -271,7 +271,7 @@ namespace SDF
             return newString;
         }
 
-        public static string Eval(SDFTokenStringRegistry registry, SDFState state, string eval)
+        public static string Eval(TokenStringRegistry registry, SDFState state, string eval)
         {
             return Parse(registry, eval).ToString(state);
         }
