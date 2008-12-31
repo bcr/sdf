@@ -14,7 +14,6 @@ namespace SDF
         private string expressionNameVar = null;
         private Hashtable argumentsVar = null;
         private int indentLevelVar = 0;
-        private Object expressionVar = null;
 
         public string ExpressionName
         {
@@ -42,15 +41,7 @@ namespace SDF
 
         public Object Expression
         {
-            get
-            {
-                return this.expressionVar;
-            }
-
-            set
-            {
-                this.expressionVar = value;
-            }
+            get; set;
         }
 
         public ParsedExpression(string expressionName, Hashtable arguments, int indentLevel)

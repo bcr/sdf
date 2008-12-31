@@ -69,12 +69,9 @@ namespace SDF
 
         private class TokenResult
         {
-            private string result;
-
             public string Result
             {
-                set { this.result = value; }
-                get { return this.result; }
+                get; set;
             }
         }
 

@@ -10,33 +10,19 @@ namespace SDF
 {
     public class SDFArgument : Attribute
     {
-        private bool requiredVar = true;
-        private string nameVar = null;
-
         public bool Required
         {
-            get
-            {
-                return requiredVar;
-            }
-
-            set
-            {
-                requiredVar = value;
-            }
+            get; set;
         }
 
         public string Name
         {
-            get
-            {
-                return nameVar;
-            }
+            get; set;
+        }
 
-            set
-            {
-                nameVar = value;
-            }
+        public SDFArgument()
+        {
+            Required = true;
         }
     }
 }

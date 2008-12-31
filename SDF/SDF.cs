@@ -129,20 +129,15 @@ namespace SDF
 
         public class FooWithRequiredParam
         {
-            TokenString argumentVar;
-
             [SDFArgument]
             public TokenString argument
             {
-                set
-                {
-                    argumentVar = value;
-                }
+                get; set;
             }
 
             public void Evaluate(SDFState state, string name, Hashtable arguments)
             {
-                System.Console.WriteLine("I am FooWithRequiredParam {0}", argumentVar);
+                System.Console.WriteLine("I am FooWithRequiredParam {0}", argument);
             }
         }
 
@@ -275,18 +270,15 @@ namespace SDF
 
         private class FixedAnswer
         {
-            private TokenString isTrueVar = null;
-
             [SDFArgument(Required=false)]
             public TokenString isTrue
             {
-                set { this.isTrueVar = value; }
-                get { return this.isTrueVar; }
+                get; set;
             }
 
             public object Evaluate(SDFState state, string name, Hashtable arguments)
             {
-                return isTrueVar;
+                return isTrue;
             }
         }
 

@@ -10,19 +10,9 @@ namespace SDF
 {
     public class SDFStateRequired : Attribute
     {
-        private Type typeVar;
-
         public Type RequiredType
         {
-            get
-            {
-                return this.typeVar;
-            }
-
-            set
-            {
-                this.typeVar = value;
-            }
+            get; set;
         }
 
         public SDFStateRequired(Type type)

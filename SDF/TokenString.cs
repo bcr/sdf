@@ -90,7 +90,6 @@ namespace SDF
     {
         private ArrayList elements = new ArrayList();
         private ArrayList arguments = new ArrayList();
-        private object token = null;
 
         static private readonly string TOKEN_START = "$[";
         static private readonly string TOKEN_END = "]";
@@ -107,10 +106,7 @@ namespace SDF
 
         public object Token
         {
-            set
-            {
-                this.token = value;
-            }
+            get; set;
         }
 
         private static int ParseTokenString(TokenStringRegistry registry, int offset, string eval, TokenString returnString)
@@ -221,11 +217,11 @@ namespace SDF
 
             if (this.arguments.Count > 0)
             {
-                MethodInfo method = this.token.GetType().GetMethod("Evaluate");
+                MethodInfo method = this.Token.GetType().GetMethod("Evaluate");
 
                 // Call the token with the arguments
 
-                returnString.Append(method.Invoke(this.token, new Object[] { state, this.arguments }).ToString());
+                returnString.Append(method.Invoke(this.Token, new Object[] { state, this.arguments }).ToString());
             }
             else
             {

@@ -10,19 +10,9 @@ namespace SDF
 {
     public class SDFStateProvided : Attribute
     {
-        private Type typeVar;
-
         public Type ProvidedType
         {
-            get
-            {
-                return this.typeVar;
-            }
-
-            set
-            {
-                this.typeVar = value;
-            }
+            get; set;
         }
 
         public SDFStateProvided(Type type)
