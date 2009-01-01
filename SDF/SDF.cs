@@ -431,7 +431,7 @@ namespace SDF
             public void AddProvidedStateFromObject(Object o)
             {
                 this.indexStack.Push(providedState.Count);
-                foreach (SDFStateProvided stateProvided in o.GetType().GetCustomAttributes(typeof(SDFStateProvided), false))
+                foreach (SDFStateProvidedAttribute stateProvided in o.GetType().GetCustomAttributes(typeof(SDFStateProvidedAttribute), false))
                 {
                     this.providedState.Add(stateProvided.ProvidedType);
                 }
@@ -509,7 +509,7 @@ namespace SDF
                         {
                             // On the class, see if there are SDFArgument attributes
 
-                            foreach (SDFArgument argument in type.GetCustomAttributes(typeof(SDFArgument), false))
+                            foreach (SDFArgumentAttribute argument in type.GetCustomAttributes(typeof(SDFArgumentAttribute), false))
                             {
                                 // If the argument is required, then whine if it wasn't specified
 
@@ -527,7 +527,7 @@ namespace SDF
 
                             foreach (PropertyInfo property in type.GetProperties())
                             {
-                                foreach (SDFArgument argument in property.GetCustomAttributes(typeof(SDFArgument), false))
+                                foreach (SDFArgumentAttribute argument in property.GetCustomAttributes(typeof(SDFArgumentAttribute), false))
                                 {
                                     // If the argument is required, then whine if it wasn't specified
 
@@ -548,7 +548,7 @@ namespace SDF
 
                             // Now check to see if there's any required state
 
-                            foreach (SDFStateRequired stateRequired in method.GetCustomAttributes(typeof(SDFStateRequired), false))
+                            foreach (SDFStateRequiredAttribute stateRequired in method.GetCustomAttributes(typeof(SDFStateRequiredAttribute), false))
                             {
                                 if ((state[stateRequired.RequiredType] == null) && (!parentExpressionStatePile.Contains(stateRequired.RequiredType)))
                                 {

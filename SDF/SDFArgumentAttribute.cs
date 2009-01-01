@@ -8,7 +8,7 @@ using System;
 
 namespace SDF
 {
-    public class SDFArgument : Attribute
+    public class SDFArgumentAttribute : Attribute
     {
         public bool Required
         {
@@ -20,7 +20,7 @@ namespace SDF
             get; set;
         }
 
-        public SDFArgument()
+        public SDFArgumentAttribute()
         {
             Required = true;
         }

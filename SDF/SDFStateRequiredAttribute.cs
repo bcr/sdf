@@ -8,14 +8,14 @@ using System;
 
 namespace SDF
 {
-    public class SDFStateRequired : Attribute
+    public class SDFStateRequiredAttribute : Attribute
     {
         public Type RequiredType
         {
             get; set;
         }
 
-        public SDFStateRequired(Type type)
+        public SDFStateRequiredAttribute(Type type)
         {
             RequiredType = type;
         }
