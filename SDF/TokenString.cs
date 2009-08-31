@@ -61,7 +61,7 @@ namespace SDF
         }
 
         [Test]
-        [ExpectedException(typeof(SDFException), @"Unknown token 'foo'")]
+        [ExpectedException(typeof(SDFException), ExpectedMessage=@"Unknown token 'foo'")]
         public void TestUnknownToken()
         {
             TokenString.Eval(registry, state, "$[foo]");

@@ -142,7 +142,7 @@ namespace SDF
         }
 
         [Test]
-        [ExpectedException(typeof(SDFException), @"Rquired argument 'argument' was not specified")]
+        [ExpectedException(typeof(SDFException), ExpectedMessage=@"Rquired argument 'argument' was not specified")]
         public void TestExpressionRequiredParamMissing()
         {
             ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParam));
@@ -170,7 +170,7 @@ namespace SDF
         }
 
         [Test]
-        [ExpectedException(typeof(SDFException), @"Rquired argument 'argument' was not specified")]
+        [ExpectedException(typeof(SDFException), ExpectedMessage=@"Rquired argument 'argument' was not specified")]
         public void TestExpressionRequiredParamClassLevelMissing()
         {
             ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredParamClassLevel));
@@ -198,7 +198,7 @@ namespace SDF
         }
 
         [Test]
-        [ExpectedException(typeof(SDFException), "Required state 'String' was not found")]
+        [ExpectedException(typeof(SDFException), ExpectedMessage="Required state 'String' was not found")]
         public void TestExpressionRequiredStateMissing()
         {
             ((ExpressionRegistry) this.state[typeof(ExpressionRegistry)]).AddType(typeof(FooWithRequiredState));
@@ -244,7 +244,7 @@ namespace SDF
         }
 
         [Test]
-        [ExpectedException(typeof(SDFException), "Unknown expression 'Foo'")]
+        [ExpectedException(typeof(SDFException), ExpectedMessage="Unknown expression 'Foo'")]
         public void TestExpressionNotFound()
         {
             SDF.Eval(this.state, "Foo");
