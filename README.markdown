@@ -1,7 +1,7 @@
 Welcome to the Simple Declarative Framework
 ===========================================
 
-The Git repository is hosted on [GitHub](http://github.com/bcr/SDF/tree/master)
+The Git repository is hosted on [GitHub](http://github.com/bcr/sdf)
 
 The Simple Declarative Framework (SDF -- type it -- it's fun!) is meant to be a minimalist framework for implementing domain specific languages. The syntax is very simple. The regex used for the actual parsing is as follows:
 
